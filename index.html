@@ -76,9 +76,11 @@
 <!-- vertex shader -->
 <script  id="3d-vertex-shader" type="x-shader/x-vertex">
 attribute vec4 a_position;
+attribute vec4 a_normal;
 attribute vec4 a_color;
 
 uniform mat4 u_matrix;
+uniform mat4 u_transformation_matrix;
 
 varying vec4 v_color;
 
@@ -87,9 +89,10 @@ void main() {
   gl_Position = u_matrix * a_position;
 
   // Pass the color to the fragment shader.
-  v_color = a_color;
+  v_color = u_transformation_matrix * a_normal;
 }
 </script>
+
 <!-- fragment shader -->
 <script  id="3d-fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
@@ -100,7 +103,7 @@ varying vec4 v_color;
 uniform vec4 u_colorMult;
 
 void main() {
-   gl_FragColor = v_color * u_colorMult;
+   gl_FragColor = v_color ;
 }
 </script>
 <script src="common/webgl-utils.js"></script>
@@ -244,6 +247,8 @@ void main() {
 		}
 		
 		createShape = function(shape, location, color, parameters) {
+			// print shpae info
+			// console.log(shape);
 			const settings = parameters == null? this.DefShapeSettings : parameters;
 			const col = color == null? this.defaultColor : color;
 			const loc = location;
@@ -293,7 +298,7 @@ void main() {
 			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Black,parameters));
 
 			position = this.getPosition(this.Positions.TopLeft);
-			parameters = sF.getDefaultsWith({"angularSpeed":[1,1,0]});
+			parameters = sF.getDefaultsWith({"angularSpeed":[.1,.1,0]});
 			this.objects.push(sF.createShape(sF.Shapes.Cube,position,sF.Colors.Red,parameters));
 			
 			position = this.getPosition(this.Positions.TopRight);
@@ -311,6 +316,10 @@ void main() {
 			position = this.getPosition(this.Positions.BottomRight);
 			parameters = sF.getDefaultsWith({"sizeChangeRate":[0.999,0.998,0.997]});
 			this.objects.push(sF.createShape(sF.Shapes.Cone,position,sF.Colors.Magneta,parameters));
+	
+			position = this.getPosition(this.Positions.Center);
+			parameters = sF.getDefaultsWith({});
+			this.objects.push(sF.createShape(sF.Shapes.Cube,position,sF.Colors.Red,parameters));
 		}
 
 		render(time,viewProjectionMatrix){
@@ -330,10 +339,16 @@ void main() {
 		constructor(gl,programInfo,vertices,color,position=[0,0,0],orientation=[0,0,0],size=[1,1,1],speed=[0,0,0],orientationChangeRate=[0,0,0],sizeChangeRate=[1,1,1],worldSize=[100,140,80],scaleLimit=[10,10,10]) {
 			this.gl = gl;
 			this.programInfo = programInfo;
+			
+			// Contains vertices' positions, normals, texcoords, and indices
 			this.vertices = vertices;
+			console.log("vertices:",vertices);
+			
 			this.bufferInfo = this.flattenedVertices();
 			this.uniforms = {	u_colorMult: color,
-							u_matrix: m4.identity(),};
+								u_matrix: m4.identity(),
+								u_transformation_matrix: m4.identity()
+							};
 			this.position = position;
 			this.rotation = orientation;
 			this.scale = size;
@@ -346,6 +361,9 @@ void main() {
 
 			this.translation = this.position;
 			this.enabled = true;
+
+			// print buffer info
+			console.log(this.bufferInfo);
 		}
 
 		flattenedVertices() {
@@ -390,12 +408,10 @@ void main() {
 				if(vector[i]>limitsHigh[i]){
 					changeRate[i] = -1* changeRate[i];
 					vector[i] = limitsHigh[i];
-
 				}
 				if(vector[i]<limitsLow[i]){
 					changeRate[i] = -1* changeRate[i];
 					vector[i] = limitsLow[i];
-
 				}
 			}
 		}
@@ -407,7 +423,6 @@ void main() {
 				if(vector[i]>limits[i]){
 					this.sizeChangeRate[i] = 1/this.sizeChangeRate[i];
 					vector[i] = limits[i];
-
 				} else if(vector[i]<1/limits[i]){
 					this.sizeChangeRate[i] = 1/this.sizeChangeRate[i];
 					vector[i] = 1/limits[i];				
@@ -434,7 +449,13 @@ void main() {
 			    viewProjectionMatrix,
 			    this.translation,
 			    this.rotation,
-			    this.scale);
+				this.scale);
+				
+			this.uniforms.u_transformation_matrix = this.computeMatrix(
+				m4.identity(),
+			    [0,0,0],
+			    this.rotation,
+			    [1,1,1]);
 
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
