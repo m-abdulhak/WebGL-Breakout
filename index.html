@@ -80,11 +80,11 @@ attribute vec4 a_normal;
 attribute vec4 a_color;
 
 uniform mat4 u_matrix;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
+uniform mat4 u_modelViewMatrix;
+uniform mat4 u_projectionMatrix;
 
 //uniform mat4 u_worldInverseTranspose;
-uniform vec4 u_light1Pos;
+uniform vec4 u_lightPosition;
 uniform vec3 u_viewWorldPosition;
 
 varying vec3 v_normal;
@@ -93,7 +93,7 @@ varying vec3 v_surfaceToView;
 
 void main() {
   // Multiply the position by the matrix.
-  gl_Position = projectionMatrix * modelViewMatrix * u_matrix * a_position;
+  gl_Position = u_projectionMatrix * u_modelViewMatrix * u_matrix * a_position;
 
   // orient the normals and pass to the fragment shader
   v_normal = mat3(u_matrix) * a_normal.xyz;
@@ -103,7 +103,7 @@ void main() {
 
   // compute the vector of the surface to the light
   // and pass it to the fragment shader
-  v_surfaceToLight = u_light1Pos.xyz - surfaceWorldPosition;
+  v_surfaceToLight = u_lightPosition.xyz - surfaceWorldPosition;
   
   // compute the vector of the surface to the view/camera
   // and pass it to the fragment shader
@@ -115,10 +115,11 @@ void main() {
 <script  id="3d-fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
 
-uniform vec4 u_colorMult;
-uniform float u_shininess;
-uniform vec3 u_lightColor;
+uniform vec4 u_surfaceColor;
+uniform vec3 u_ambientColor;
+uniform vec3 u_diffuseColor;
 uniform vec3 u_specularColor;
+uniform float u_shininess;
 
 // Passed in from the vertex shader.
 varying vec3 v_normal;
@@ -141,15 +142,18 @@ void main() {
   if (light > 0.0) {
     specular = pow(dot(normal, halfVector), u_shininess);
   }
-
-  gl_FragColor = u_colorMult;
+  
+  gl_FragColor = u_surfaceColor;
 
   // Lets multiply just the color portion (not the alpha)
   // by the light
-  gl_FragColor.rgb *= light * u_lightColor;
+  gl_FragColor.rgb *= light * u_diffuseColor ;
   
   // Just add in the specular
   gl_FragColor.rgb += specular * u_specularColor;
+
+  // Add ambientColor
+  gl_FragColor.rgb += u_ambientColor;
 }
 </script>
 <script src="common/webgl-utils.js"></script>
@@ -174,23 +178,13 @@ void main() {
 	var view = viewTypes['Perspective'];
 		
 	// My Lighting 
-	var light1Pos = [70, 70, 40, 1];
 	// Lighting
 	// vec4
-	//var lightPosition = [1.0, 1.0, 1.0, 0.0 ];
-	//var lightAmbient = [0.2, 0.2, 0.2, 1.0 ];
-	//var lightDiffuse = [ 1.0, 1.0, 1.0, 1.0 ];
-	//var lightSpecular = [ 1.0, 1.0, 1.0, 1.0 ];
-
-	//var materialAmbient = [ 1.0, 0.0, 1.0, 1.0 ];
-	//var materialDiffuse = [ 1.0, 0.8, 0.0, 1.0 ];
-	//var materialSpecular = [ 1.0, 1.0, 1.0, 1.0 ];
-	//var materialShininess = 20.0;
-
-	// TODO: are those needed?
-	var ctm;
-	var ambientColor, diffuseColor, specularColor;
-
+	var lightPosition = [70, 70, 40, 1.0 ];
+	var lightColor = [1., 1., 1.];
+	var lightAmbient = multByScalar(lightColor, 0.05);
+	var lightDiffuse = multByScalar(lightColor, 0.5);
+	var lightSpecular = multByScalar(lightColor, 1.0);;
 
 	function degToRad(d){
 
@@ -268,32 +262,57 @@ void main() {
 
 	class ShapeFactory {
 		constructor (gl,programInfo){
-			this.gl = gl;
-			this.programInfo = programInfo;
-			this.DefShapeSettings = {
-				position : [0,0,0],
-				orientation : [0,0,0],
-				size : [1,1,1],
-				speed : [0,0,0],
-				angularSpeed : [0,0,0],
-				sizeChangeRate : [1,1,1],
-				scaleLimit: [2,2,2],
-				isLight: false};
-			this.Shapes = {
-				"Plane" : primitives.createCubeVertices(20),
-				"Sphere" : primitives.createSphereVertices(10, 60, 60),
-				"Cube" : primitives.createCubeVertices(20),
-				"Pyramid" : primitives.createTruncatedConeVertices(10, 0, 20, 30, 10, true, true),
-				"Cylinder" : primitives.createTruncatedConeVertices(10, 10, 20, 60, 1, true, true),
-				"Cone" : primitives.createTruncatedConeVertices(10, 0, 20, 60, 1, true, true)};
-			this.Colors = {
-				"Red" : [1, 0, 0, 1],
-				"Green" : [0, 1, 0, 1],
-				"Blue" : [0.3, 0.3, 1, 1],
-				"Yellow" : [1, 1, 0, 1],
-				"Magneta" : [1, 0, 1, 1],
-				"Gray" : [0.3, 0.3, 0.3, 1],
-				"Black" : [0, 0, 0, 1]};
+		this.gl = gl;
+		this.programInfo = programInfo;
+
+		// Consts
+		this.DefShapeSettings = {
+			position : [0,0,0],
+			speed : [0,0,0],
+			positionLimits : {
+						"Max" : [1000, 1000, 1000],
+						"Min" : [-1000, -1000,-1000]
+			},
+			orientation : [0,0,0],
+			angularSpeed : [0,0,0],
+			size : [1,1,1],
+			sizeChangeRate : [1,1,1],	
+			scaleLimit: [2,2,2],			
+			material: {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
+				"materialSpecular" : [ .3, .3, .3 ],
+				"materialShininess" : 5.0}	,
+			isLight: false};
+
+		this.Shapes = {
+			"Plane" : primitives.createCubeVertices(20),
+			"Sphere" : primitives.createSphereVertices(10, 60, 60),
+			"Cube" : primitives.createCubeVertices(20),
+			"Pyramid" : primitives.createTruncatedConeVertices(10, 0, 20, 30, 10, true, true),
+			"Cylinder" : primitives.createTruncatedConeVertices(10, 10, 20, 60, 1, true, true),
+			"Cone" : primitives.createTruncatedConeVertices(10, 0, 20, 60, 1, true, true)};
+		this.Colors = {
+			"Red" : [1, 0.1, 0.1, 1],
+			"Green" : [0.1, 1, 0.1, 1],
+			"Blue" : [0.3, 0.3, 1, 1],
+			"Yellow" : [1, 1, 0.1, 1],
+			"Magneta" : [1, 0.1, 1, 1],
+			"Gray" : [0.3, 0.3, 0.3, 1],
+			"Black" : [0.1, 0.1, 0.1, 1]};
+		this.Materials = {
+			"Shiny" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+				"materialDiffuse" : [ 0.8, 0.8, 0.8 ],
+				"materialSpecular" : [ 1.0, 1.0, 1.0 ],
+				"materialShininess" : 10000.0},
+			"Matt" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
+				"materialSpecular" : [ 0.5, 0.5, 0.5 ],
+				"materialShininess" : 5.0},
+			"HalfShiny" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
+				"materialSpecular" : [ 1.0, 1.0, 1.0 ],
+				"materialShininess" : 10.0}						
+			};
 			this.DefaultColor = this.Colors.Red;
 		}
 
@@ -322,13 +341,18 @@ void main() {
 				shape,
 				col,
 				loc,
-				settings.orientation,
-				settings.size,
 				settings.speed,
+				settings.positionLimits,
+				settings.orientation,
 				settings.angularSpeed,
+				settings.size,
 				settings.sizeChangeRate,
-				settings.scaleLimit,
-				settings.isLight,
+				settings.scaleLimit,	
+				settings.material.materialAmbient,
+				settings.material.materialDiffuse,
+				settings.material.materialSpecular,
+				settings.material.materialShininess,
+				settings.isLight,		
 				settings.lightIndex);
 		}
 	}
@@ -357,7 +381,7 @@ void main() {
 
 			var position = this.getPosition(this.Positions.Center);
 			position[2]=-15;
-			var parameters = sF.getDefaultsWith({"size":[8.5,8.5,.1], "scaleLimit": [100,100,100]});
+			var parameters = sF.getDefaultsWith({"size":[8.5,8.5,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters));
 
 			position = this.getPosition(this.Positions.TopLeft);
@@ -369,7 +393,7 @@ void main() {
 			this.objects.push(sF.createShape(sF.Shapes.Pyramid,position,sF.Colors.Yellow,parameters));
 
 			position = this.getPosition(this.Positions.Center);
-			parameters = sF.getDefaultsWith({"speed":[10,0,0], "isLight": true, "lightIndex": 1});
+			parameters = sF.getDefaultsWith({"speed":[10,0,0], "material": sF.Materials.HalfShiny, "isLight": false, "lightIndex": 1});
 			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Green,parameters));
 
 			position = this.getPosition(this.Positions.BottomLeft);
@@ -400,12 +424,20 @@ void main() {
 					vertices, 
 					color, 
 					position=[0,0,0], 
-					orientation=[0,0,0], 
-					size=[1,1,1], 
 					speed=[0,0,0], 
-					orientationChangeRate=[0,0,0], 
+					positionLimits = {
+						"Max" : [1000, 1000, 1000],
+						"Min" : [-1000, -1000,-1000]
+					},
+					orientation=[0,0,0], 
+					orientationChangeRate=[0,0,0],
+					size=[1,1,1],  
 					sizeChangeRate=[1,1,1], 
-					scaleLimit=[10,10,10],
+					scaleLimit=[10,10,10],			
+					materialAmbient = [ 1.0, 1.0, 1.0 ],
+					materialDiffuse = [ 1.0, 1.0, 1.0 ],
+					materialSpecular = [ 1.0, 1.0, 1.0 ],
+					materialShininess = 20.0,
 					isLight = false,
 					lightIndex) {
 
@@ -417,12 +449,13 @@ void main() {
 			//console.log("vertices:",vertices);
 
 			this.bufferInfo = this.flattenedVertices();
-			this.uniforms = {	u_colorMult: color,
-								u_light1Pos: light1Pos,
+			this.uniforms = {	u_surfaceColor: color,
+								u_lightPosition: lightPosition,
 								u_matrix: m4.identity(),
 								u_transformation_matrix: m4.identity()
 							};
 			this.position = position;
+			this.positionLimits = positionLimits;
 			this.rotation = orientation;
 			this.scale = size;
 			this.speed = speed;
@@ -434,6 +467,12 @@ void main() {
 			this.translation = this.position;
 			this.enabled = true;
 
+			// material properties
+			this.materialAmbient = materialAmbient;
+			this.materialDiffuse = materialDiffuse;
+			this.materialSpecular = materialSpecular;
+			this.materialShininess = materialShininess;
+			
 			// lighting
 			this.isLight = isLight;
 			this.lightIndex = lightIndex;
@@ -462,7 +501,7 @@ void main() {
 			this.time = time;
 
 			this.position = this.simulate(this.position,this.speed,delta);
-			this.bounce(this.position,this.speed, [100, 100, 100],[-100, -110,-100]);
+			this.bounce(this.position,this.speed, this.positionLimits.Max,this.positionLimits.Min);
 			this.translation = [this.position[0],this.position[1],this.position[2]];
 
 			this.rotation = this.simulate(this.rotation,this.orientationChangeRate,delta);
@@ -474,8 +513,8 @@ void main() {
 		simulate(vector,changeRate,timeDelta){
 			if(this.enabled){
 				if(this.isLight) {
-					//light1Pos = this.position.concat(1);
-					//console.log('islight:',this.isLight,this.position,light1Pos)
+					lightPosition = this.position.concat(1);
+					//console.log('islight:',this.isLight,this.position,lightPosition)
 				}
 				return vecAdd(vector,multByScalar(changeRate,timeDelta));
 			}
@@ -542,33 +581,20 @@ void main() {
 				this.scale);
 				
 			this.uniforms.u_transformation_matrix = transfMatrix;
-			
-			// TODO: Not needed?
-			//var worldInverseMatrix = m4.inverse(transfMatrix);
-			//var worldInverseTransposeMatrix = m4.transpose(worldInverseMatrix);
-			//this.uniforms.u_worldInverseTranspose = worldInverseTransposeMatrix;
-
-			// TODO: Fix this or remove?
-			// Update lighting parameters
-			//var ambientProduct = mult(lightAmbient, materialAmbient);
-			//var diffuseProduct = mult(lightDiffuse, materialDiffuse);
-			//var specularProduct = mult(lightSpecular, materialSpecular);
-			
-			//this.uniforms.ambientProduct = ambientProduct;
-			//this.uniforms.diffuseProduct = diffuseProduct;
-			//this.uniforms.specularProduct = specularProduct;
-			//this.uniforms.lightPosition = lightPosition;
-			//this.uniforms.materialShininess = materialShininess;
+			this.uniforms.u_modelViewMatrix = viewMatrix;
+			this.uniforms.u_projectionMatrix = projectionMatrix;
+			this.uniforms.u_viewWorldPosition = cameraPosition;
 
 			// Update my lighting parameters
-			this.uniforms.u_light1Pos = light1Pos;
-			this.uniforms.modelViewMatrix = viewMatrix;
-			this.uniforms.projectionMatrix = projectionMatrix;
-			this.uniforms.u_viewWorldPosition = cameraPosition;
-			this.uniforms.u_shininess = 30;
-			this.uniforms.u_lightColor = [1, 0.6, 0.6];
-			this.uniforms.u_specularColor = [1, 0.6, 0.6];
+			var ambientProduct = mult(lightAmbient, this.materialAmbient);
+			var diffuseProduct = mult(lightDiffuse, this.materialDiffuse);
+			var specularProduct = mult(lightSpecular, this.materialSpecular);
 
+			this.uniforms.u_lightPosition = lightPosition;			
+			this.uniforms.u_ambientColor = ambientProduct;
+			this.uniforms.u_diffuseColor = diffuseProduct;
+			this.uniforms.u_specularColor = specularProduct;
+			this.uniforms.u_shininess = this.materialShininess;
 
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
@@ -622,9 +648,9 @@ void main() {
 		requestAnimationFrame(render);
 
 		function setLight1Tocamera() {
-			light1Pos[0] = cameraPosition[0];
-			light1Pos[1] = cameraPosition[1];
-			light1Pos[2] = cameraPosition[2];
+			lightPosition[0] = cameraPosition[0];
+			lightPosition[1] = cameraPosition[1];
+			lightPosition[2] = cameraPosition[2];
 		}
 
 		// Draw the scene.
@@ -672,23 +698,23 @@ void main() {
 				cameraPosition = vecAdd(cameraPosition,normDir);
 				target = vecAdd(target,normDir);
 				orthoscale *= .99; 
-				setLight1Tocamera();
+				//setLight1Tocamera();
 			}
 			else if (e.which == 'S'.charCodeAt(0)){ // Back
 				cameraPosition = vecAdd(cameraPosition,multByScalar(normDir,-1));
 				target = vecAdd(target,multByScalar(normDir,-1));
 				orthoscale *= 1.01;
-				setLight1Tocamera(); 
+				//setLight1Tocamera(); 
 			}
 			else if (e.which == 'A'.charCodeAt(0)){ // left
 				var newDir = rotateY(normDir,-0.2);
 				target = vecAdd(cameraPosition,newDir);
-				setLight1Tocamera();
+				//setLight1Tocamera();
 			}
 			else if (e.which == 'D'.charCodeAt(0)){ // right
 				var newDir = rotateY(normDir,0.2);
 				target = vecAdd(cameraPosition,newDir);
-				setLight1Tocamera();
+				//setLight1Tocamera();
 			}
 			else if (e.which == 'E'.charCodeAt(0)){ // up
 				var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -697,7 +723,7 @@ void main() {
 				if(newDir[1]<0.8){
 					target = vecAdd(cameraPosition,newDir);
 				}
-				setLight1Tocamera();
+				//setLight1Tocamera();
 			}
 			else if (e.which == 'Q'.charCodeAt(0)){ // down
 				var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -706,7 +732,7 @@ void main() {
 				if(newDir[1]>-0.8){
 					target = vecAdd(cameraPosition,newDir);
 				}
-				setLight1Tocamera();
+				//setLight1Tocamera();
 			}
 			else if (e.which == 'O'.charCodeAt(0)){
 				console.log('Orthographic');
@@ -721,28 +747,28 @@ void main() {
 				document.getElementById("sidebar").style.display = dis != "none" ? "none":"block";
 			}
 			else if (e.which == 'M'.charCodeAt(0)){
-				light1Pos[0] += 10;
+				lightPosition[0] += 10;
 			}
 			else if (e.which == 'B'.charCodeAt(0)){
-				light1Pos[0] -= 10;
+				lightPosition[0] -= 10;
 			}
 			else if (e.which == 'H'.charCodeAt(0)){
-				light1Pos[1] += 10;
+				lightPosition[1] += 10;
 			}
 			else if (e.which == 'N'.charCodeAt(0)){
-				light1Pos[1] -= 10;
+				lightPosition[1] -= 10;
 			}
 			else if (e.which == 'J'.charCodeAt(0)){
-				light1Pos[2] += 10;
+				lightPosition[2] += 10;
 			}
 			else if (e.which == 'G'.charCodeAt(0)){
-				light1Pos[2] -= 10;
+				lightPosition[2] -= 10;
 			}
 			else if (e.which == 'Z'.charCodeAt(0)){
-				light1Pos[0] = cameraPosition[0];
-				light1Pos[1] = cameraPosition[1];
-				light1Pos[2] = cameraPosition[2];
-				console.log(cameraPosition,light1Pos);
+				lightPosition[0] = cameraPosition[0];
+				lightPosition[1] = cameraPosition[1];
+				lightPosition[2] = cameraPosition[2];
+				console.log(cameraPosition,lightPosition);
 			}
 		};
 
