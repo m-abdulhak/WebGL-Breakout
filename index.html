@@ -83,13 +83,13 @@ uniform mat4 u_matrix;
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 
-uniform vec4 u_light1Pos;
 //uniform mat4 u_worldInverseTranspose;
+uniform vec4 u_light1Pos;
+uniform vec3 u_viewWorldPosition;
 
 varying vec3 v_normal;
-varying vec3 fColor;
-
 varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToView;
 
 void main() {
   // Multiply the position by the matrix.
@@ -104,6 +104,10 @@ void main() {
   // compute the vector of the surface to the light
   // and pass it to the fragment shader
   v_surfaceToLight = u_light1Pos.xyz - surfaceWorldPosition;
+  
+  // compute the vector of the surface to the view/camera
+  // and pass it to the fragment shader
+  v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
 }
 </script>
 
@@ -112,26 +116,40 @@ void main() {
 precision mediump float;
 
 uniform vec4 u_colorMult;
+uniform float u_shininess;
+uniform vec3 u_lightColor;
+uniform vec3 u_specularColor;
 
 // Passed in from the vertex shader.
 varying vec3 v_normal;
 varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToView;
 
 void main() {
   // because v_normal is a varying it's interpolated
   // so it will not be a unit vector. Normalizing it
   // will make it a unit vector again
   vec3 normal = normalize(v_normal);
-
+  
   vec3 surfaceToLightDirection = normalize(v_surfaceToLight);
+  vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+  vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
 
   float light = dot(normal, surfaceToLightDirection);
+
+  float specular = 0.0;
+  if (light > 0.0) {
+    specular = pow(dot(normal, halfVector), u_shininess);
+  }
 
   gl_FragColor = u_colorMult;
 
   // Lets multiply just the color portion (not the alpha)
   // by the light
-  gl_FragColor.rgb *= light;
+  gl_FragColor.rgb *= light * u_lightColor;
+  
+  // Just add in the specular
+  gl_FragColor.rgb += specular * u_specularColor;
 }
 </script>
 <script src="common/webgl-utils.js"></script>
@@ -546,6 +564,11 @@ void main() {
 			this.uniforms.u_light1Pos = light1Pos;
 			this.uniforms.modelViewMatrix = viewMatrix;
 			this.uniforms.projectionMatrix = projectionMatrix;
+			this.uniforms.u_viewWorldPosition = cameraPosition;
+			this.uniforms.u_shininess = 30;
+			this.uniforms.u_lightColor = [1, 0.6, 0.6];
+			this.uniforms.u_specularColor = [1, 0.6, 0.6];
+
 
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
@@ -598,6 +621,12 @@ void main() {
 
 		requestAnimationFrame(render);
 
+		function setLight1Tocamera() {
+			light1Pos[0] = cameraPosition[0];
+			light1Pos[1] = cameraPosition[1];
+			light1Pos[2] = cameraPosition[2];
+		}
+
 		// Draw the scene.
 		function render(time) {
 			var t = time /1000;
@@ -643,19 +672,23 @@ void main() {
 				cameraPosition = vecAdd(cameraPosition,normDir);
 				target = vecAdd(target,normDir);
 				orthoscale *= .99; 
+				setLight1Tocamera();
 			}
 			else if (e.which == 'S'.charCodeAt(0)){ // Back
 				cameraPosition = vecAdd(cameraPosition,multByScalar(normDir,-1));
 				target = vecAdd(target,multByScalar(normDir,-1));
-				orthoscale *= 1.01; 
+				orthoscale *= 1.01;
+				setLight1Tocamera(); 
 			}
 			else if (e.which == 'A'.charCodeAt(0)){ // left
 				var newDir = rotateY(normDir,-0.2);
 				target = vecAdd(cameraPosition,newDir);
+				setLight1Tocamera();
 			}
 			else if (e.which == 'D'.charCodeAt(0)){ // right
 				var newDir = rotateY(normDir,0.2);
 				target = vecAdd(cameraPosition,newDir);
+				setLight1Tocamera();
 			}
 			else if (e.which == 'E'.charCodeAt(0)){ // up
 				var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -664,6 +697,7 @@ void main() {
 				if(newDir[1]<0.8){
 					target = vecAdd(cameraPosition,newDir);
 				}
+				setLight1Tocamera();
 			}
 			else if (e.which == 'Q'.charCodeAt(0)){ // down
 				var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -672,6 +706,7 @@ void main() {
 				if(newDir[1]>-0.8){
 					target = vecAdd(cameraPosition,newDir);
 				}
+				setLight1Tocamera();
 			}
 			else if (e.which == 'O'.charCodeAt(0)){
 				console.log('Orthographic');
