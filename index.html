@@ -80,21 +80,30 @@ attribute vec4 a_normal;
 attribute vec4 a_color;
 
 uniform mat4 u_matrix;
-uniform mat4 u_transformation_matrix;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+uniform vec4 u_light1Pos;
+//uniform mat4 u_worldInverseTranspose;
 
 varying vec3 v_normal;
-varying vec4 v_color;
+varying vec3 fColor;
+
+varying vec3 v_surfaceToLight;
 
 void main() {
-	// Multiply the position by the matrix.
-	gl_Position = u_matrix * a_position;
+  // Multiply the position by the matrix.
+  gl_Position = projectionMatrix * modelViewMatrix * u_matrix * a_position;
 
-	// Pass the color to the fragment shader.
-	v_color =  a_color;
+  // orient the normals and pass to the fragment shader
+  v_normal = mat3(u_matrix) * a_normal.xyz;
 
-	// Pass the normal to the fragment shader
-	vec4 temp_normal = u_transformation_matrix * a_normal;
-	v_normal = temp_normal.rgb;
+  // compute the world position of the surfoace
+  vec3 surfaceWorldPosition = (u_matrix * a_position).xyz;
+
+  // compute the vector of the surface to the light
+  // and pass it to the fragment shader
+  v_surfaceToLight = u_light1Pos.xyz - surfaceWorldPosition;
 }
 </script>
 
@@ -102,54 +111,69 @@ void main() {
 <script  id="3d-fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
 
-// Passed in from the vertex shader.
-varying vec4 v_color;
-varying vec3 v_normal;
-
-uniform vec4 u_reverseLightOneDirection;
 uniform vec4 u_colorMult;
 
+// Passed in from the vertex shader.
+varying vec3 v_normal;
+varying vec3 v_surfaceToLight;
+
 void main() {
-	// Consts
-	vec3 directionalLightColor = vec3(1, 1, 1);
-	vec3 ambientLight = vec3(0.4, 0.4, 0.4);
+  // because v_normal is a varying it's interpolated
+  // so it will not be a unit vector. Normalizing it
+  // will make it a unit vector again
+  vec3 normal = normalize(v_normal);
 
-	// Normalizing is needed because v_normal is a varying, 
-	// it's interpolated so it will not be a unit vector
-	vec3 normal = normalize(v_normal);
+  vec3 surfaceToLightDirection = normalize(v_surfaceToLight);
 
-	float directionalLightIntensity = max(dot(normal.xyz, u_reverseLightOneDirection.xyz), 0.0);
-	vec3 directionalLightValue = directionalLightIntensity * directionalLightColor;
+  float light = dot(normal, surfaceToLightDirection);
 
-	vec3 colorVal = ambientLight + directionalLightValue;
-	
-	gl_FragColor = u_colorMult * vec4(colorVal, 1);
+  gl_FragColor = u_colorMult;
 
-	// Lets multiply just the color portion (not the alpha)
-    // by the light
-    // gl_FragColor.rgb *= directionalLightValue;
-
-	//gl_FragColor = normal ;
+  // Lets multiply just the color portion (not the alpha)
+  // by the light
+  gl_FragColor.rgb *= light;
 }
 </script>
 <script src="common/webgl-utils.js"></script>
 <script src="common/m4.js"></script>
 <script src="common/primitives.js"></script>
+<script type="text/javascript" src="common/MV.js"></script>
 
 <script type="text/javascript">
 	"use strict";
 
 	var scene;
 
-	var cameraPosition = [0, 0, 120];
+	var cameraPosition = [70, 70, 120];
 	var target = [cameraPosition[0], cameraPosition[1], cameraPosition[2]-1];
 	var up = [0, 100, 0];
 	var cameraMatrix = [];
+	var viewMatrix = [];
+	var projectionMatrix = [];
 	var orthoscale = 1;
 	
 	var viewTypes = {'Orthographic':0,'Perspective':1};
 	var view = viewTypes['Perspective'];
 		
+	// My Lighting 
+	var light1Pos = [70, 70, 40, 1];
+	// Lighting
+	// vec4
+	//var lightPosition = [1.0, 1.0, 1.0, 0.0 ];
+	//var lightAmbient = [0.2, 0.2, 0.2, 1.0 ];
+	//var lightDiffuse = [ 1.0, 1.0, 1.0, 1.0 ];
+	//var lightSpecular = [ 1.0, 1.0, 1.0, 1.0 ];
+
+	//var materialAmbient = [ 1.0, 0.0, 1.0, 1.0 ];
+	//var materialDiffuse = [ 1.0, 0.8, 0.0, 1.0 ];
+	//var materialSpecular = [ 1.0, 1.0, 1.0, 1.0 ];
+	//var materialShininess = 20.0;
+
+	// TODO: are those needed?
+	var ctm;
+	var ambientColor, diffuseColor, specularColor;
+
+
 	function degToRad(d){
 
 	    return d * Math.PI / 180;
@@ -163,15 +187,7 @@ void main() {
 		return resV;
 	}
 
-	function vecMult(v1,v2){
-		var resV = [];
-		for (var i = 0; i < v1.length; i++) {
-			resV[i] = v1[i]*v2[i];
-		}
-		return resV;
-	}
-
-	function mult(v1,scalar) {
+	function multByScalar(v1,scalar) {
 		var resV = [];
 		for (var i = 0; i < v1.length; i++) {
 			resV[i] = v1[i]*scalar;
@@ -233,18 +249,18 @@ void main() {
 	}
 
 	class ShapeFactory {
-		constructor (gl,programInfo,sceneSize){
+		constructor (gl,programInfo){
 			this.gl = gl;
 			this.programInfo = programInfo;
 			this.DefShapeSettings = {
-				position : [sceneSize[0]/2,sceneSize[1]/2,0],
+				position : [0,0,0],
 				orientation : [0,0,0],
 				size : [1,1,1],
 				speed : [0,0,0],
 				angularSpeed : [0,0,0],
 				sizeChangeRate : [1,1,1],
-				sceneSize : sceneSize,
-				scaleLimit: [2,2,2]};
+				scaleLimit: [2,2,2],
+				isLight: false};
 			this.Shapes = {
 				"Plane" : primitives.createCubeVertices(20),
 				"Sphere" : primitives.createSphereVertices(10, 60, 60),
@@ -258,7 +274,8 @@ void main() {
 				"Blue" : [0.3, 0.3, 1, 1],
 				"Yellow" : [1, 1, 0, 1],
 				"Magneta" : [1, 0, 1, 1],
-				"Black" : [0, 0, 0, .1]};
+				"Gray" : [0.3, 0.3, 0.3, 1],
+				"Black" : [0, 0, 0, 1]};
 			this.DefaultColor = this.Colors.Red;
 		}
 
@@ -270,13 +287,13 @@ void main() {
 					settings[k] = parObject[k];
 				}
 			}
-
+			//console.log(parObject,settings)
 			return settings;
 		}
 		
 		createShape = function(shape, location, color, parameters) {
 			// print shpae info
-			console.log(shape);
+			//console.log(shape);
 			const settings = parameters == null? this.DefShapeSettings : parameters;
 			const col = color == null? this.defaultColor : color;
 			const loc = location;
@@ -292,17 +309,17 @@ void main() {
 				settings.speed,
 				settings.angularSpeed,
 				settings.sizeChangeRate,
-				settings.sceneSize,
-				settings.scaleLimit);
+				settings.scaleLimit,
+				settings.isLight,
+				settings.lightIndex);
 		}
 	}
 
 	class Scene{
-		constructor(gl,programInfo,sceneSize){
+		constructor(gl,programInfo){
 			this.gl = gl;
 			this.programInfo = programInfo;
-			this.sceneSize = sceneSize;
-			this.ShapeFactory = new ShapeFactory(gl,programInfo,sceneSize);
+			this.ShapeFactory = new ShapeFactory(gl,programInfo);
 			this.Positions = {
 				"Center" : [2.5,2.5,0],
 				"TopLeft" : [1,4,0],
@@ -313,7 +330,7 @@ void main() {
 		}
 
 		getPosition(position){
-			const stepSize = [this.sceneSize[0]/5,this.sceneSize[1]/5,this.sceneSize[2]/5];
+			const stepSize = [30, 30, 30];
 			return [position[0]*stepSize[0],position[1]*stepSize[1],position[2]*stepSize[2]];
 		}
 
@@ -322,35 +339,35 @@ void main() {
 
 			var position = this.getPosition(this.Positions.Center);
 			position[2]=-15;
-			var parameters = sF.getDefaultsWith({"size":[8.5,8.5,.01],scaleLimit: [100,100,100]});
-			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Black,parameters));
+			var parameters = sF.getDefaultsWith({"size":[8.5,8.5,.1], "scaleLimit": [100,100,100]});
+			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters));
 
 			position = this.getPosition(this.Positions.TopLeft);
 			parameters = sF.getDefaultsWith({"angularSpeed":[.1,.1,0]});
 			this.objects.push(sF.createShape(sF.Shapes.Cube,position,sF.Colors.Red,parameters));
 			
 			position = this.getPosition(this.Positions.TopRight);
-			parameters = sF.getDefaultsWith({"speed":[1,1,1],"angularSpeed":[-1,-1,-1],"sizeChangeRate":[1.1,1.005,1.005],scaleLimit:[2,2,2],"worldSize":[1,1,1]});
+			parameters = sF.getDefaultsWith({"speed":[1,1,1],"angularSpeed":[-1,-1,-1],"sizeChangeRate":[1.1,1.005,1.005],"scaleLimit":[2,2,2]});
 			this.objects.push(sF.createShape(sF.Shapes.Pyramid,position,sF.Colors.Yellow,parameters));
 
 			position = this.getPosition(this.Positions.Center);
-			parameters = sF.getDefaultsWith({"speed":[10,0,0]});
+			parameters = sF.getDefaultsWith({"speed":[10,0,0], "isLight": true, "lightIndex": 1});
 			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Green,parameters));
 
 			position = this.getPosition(this.Positions.BottomLeft);
-			parameters = sF.getDefaultsWith({"sizeChangeRate":[1.001,1.001,1.001]});
+			parameters = sF.getDefaultsWith({"sizeChangeRate":[1.001,1.001,1.001], "scaleLimit": [1.2,1.2,1.2]});
 			this.objects.push(sF.createShape(sF.Shapes.Cylinder,position,sF.Colors.Blue,parameters));
 
 			position = this.getPosition(this.Positions.BottomRight);
-			parameters = sF.getDefaultsWith({"sizeChangeRate":[0.999,0.998,0.997]});
+			parameters = sF.getDefaultsWith({"sizeChangeRate":[0.999,0.998,0.997], "scaleLimit": [1.2,1.2,1.2]});
 			this.objects.push(sF.createShape(sF.Shapes.Cone,position,sF.Colors.Magneta,parameters));
 		}
 
-		render(time,viewProjectionMatrix){
+		render(time){
 			var t = time /1000;
 			for(const o of this.objects){
 				o.update(time);
-				o.draw(viewProjectionMatrix,t);
+				o.draw(t);
 			}
 		}
 
@@ -360,7 +377,20 @@ void main() {
 	}
 
 	class WebGlObject {
-		constructor(gl,programInfo,vertices,color,position=[0,0,0],orientation=[0,0,0],size=[1,1,1],speed=[0,0,0],orientationChangeRate=[0,0,0],sizeChangeRate=[1,1,1],worldSize=[100,140,80],scaleLimit=[10,10,10]) {
+		constructor(gl, 
+					programInfo, 
+					vertices, 
+					color, 
+					position=[0,0,0], 
+					orientation=[0,0,0], 
+					size=[1,1,1], 
+					speed=[0,0,0], 
+					orientationChangeRate=[0,0,0], 
+					sizeChangeRate=[1,1,1], 
+					scaleLimit=[10,10,10],
+					isLight = false,
+					lightIndex) {
+
 			this.gl = gl;
 			this.programInfo = programInfo;
 			
@@ -370,7 +400,7 @@ void main() {
 
 			this.bufferInfo = this.flattenedVertices();
 			this.uniforms = {	u_colorMult: color,
-								u_reverseLightOneDirection: normalize([1, 1, 1, 0]),
+								u_light1Pos: light1Pos,
 								u_matrix: m4.identity(),
 								u_transformation_matrix: m4.identity()
 							};
@@ -381,14 +411,18 @@ void main() {
 			this.orientationChangeRate = orientationChangeRate;
 			this.sizeChangeRate = sizeChangeRate;
 			this.time = 0;
-			this.worldSize = worldSize;
 			this.scaleLimit = scaleLimit;
 
 			this.translation = this.position;
 			this.enabled = true;
 
+			// lighting
+			this.isLight = isLight;
+			this.lightIndex = lightIndex;
+
 			// print buffer info
-			console.log(this.bufferInfo);
+			//console.log(this.bufferInfo);
+			//console.log(this);
 		}
 
 		flattenedVertices() {
@@ -410,9 +444,8 @@ void main() {
 			this.time = time;
 
 			this.position = this.simulate(this.position,this.speed,delta);
-			this.bounce(this.position,this.speed,this.worldSize,[0,0,-1*this.worldSize[2]]);
-			this.translation = [this.position[0]-this.worldSize[0]/2,this.position[1]-this.worldSize[1]/2,this.position[2]-this.worldSize[2]/2];
-
+			this.bounce(this.position,this.speed, [100, 100, 100],[-100, -110,-100]);
+			this.translation = [this.position[0],this.position[1],this.position[2]];
 
 			this.rotation = this.simulate(this.rotation,this.orientationChangeRate,delta);
 			
@@ -421,11 +454,20 @@ void main() {
 		}
 
 		simulate(vector,changeRate,timeDelta){
-			return this.enabled? vecAdd(vector,mult(changeRate,timeDelta)):vector;
+			if(this.enabled){
+				if(this.isLight) {
+					//light1Pos = this.position.concat(1);
+					//console.log('islight:',this.isLight,this.position,light1Pos)
+				}
+				return vecAdd(vector,multByScalar(changeRate,timeDelta));
+			}
+			else{
+				return vector;
+			}
 		}
 
 		simulateSize(vector,changeRate,timeDelta){
-			return this.enabled? vecMult(vector,changeRate):vector;
+			return this.enabled? mult(vector,changeRate):vector;
 		}
 
 		bounce(vector,changeRate,limitsHigh,limitsLow){
@@ -463,7 +505,7 @@ void main() {
 			return newVec;
 		}
 
-		draw(viewProjectionMatrix,time){
+		draw(time){
 
 			this.gl.useProgram(this.programInfo.program);
 
@@ -471,16 +513,39 @@ void main() {
 			webglUtils.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo);
 
 			this.uniforms.u_matrix = this.computeMatrix(
-			    viewProjectionMatrix,
 			    this.translation,
 			    this.rotation,
 				this.scale);
-				
-			this.uniforms.u_transformation_matrix = this.computeMatrix(
+
+			var transfMatrix = this.computeMatrix(
 				m4.identity(),
 			    [0,0,0],
 			    this.rotation,
 				this.scale);
+				
+			this.uniforms.u_transformation_matrix = transfMatrix;
+			
+			// TODO: Not needed?
+			//var worldInverseMatrix = m4.inverse(transfMatrix);
+			//var worldInverseTransposeMatrix = m4.transpose(worldInverseMatrix);
+			//this.uniforms.u_worldInverseTranspose = worldInverseTransposeMatrix;
+
+			// TODO: Fix this or remove?
+			// Update lighting parameters
+			//var ambientProduct = mult(lightAmbient, materialAmbient);
+			//var diffuseProduct = mult(lightDiffuse, materialDiffuse);
+			//var specularProduct = mult(lightSpecular, materialSpecular);
+			
+			//this.uniforms.ambientProduct = ambientProduct;
+			//this.uniforms.diffuseProduct = diffuseProduct;
+			//this.uniforms.specularProduct = specularProduct;
+			//this.uniforms.lightPosition = lightPosition;
+			//this.uniforms.materialShininess = materialShininess;
+
+			// Update my lighting parameters
+			this.uniforms.u_light1Pos = light1Pos;
+			this.uniforms.modelViewMatrix = viewMatrix;
+			this.uniforms.projectionMatrix = projectionMatrix;
 
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
@@ -488,8 +553,8 @@ void main() {
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
 		}
 
-		computeMatrix(viewProjectionMatrix, translation, rotation, scale){
-			var matrix = viewProjectionMatrix;
+		computeMatrix( translation, rotation, scale){
+			var matrix = m4.identity();
 
 			matrix = m4.translate(matrix,
 			    translation[0],
@@ -528,7 +593,7 @@ void main() {
 		var programInfo = webglUtils.createProgramInfo(gl, ["3d-vertex-shader", "3d-fragment-shader"]);
 
 		//objects = createObjects(gl,programInfo);
-		scene = new Scene(gl,programInfo,[100,140,80]);
+		scene = new Scene(gl,programInfo);
 		scene.createObjects();
 
 		requestAnimationFrame(render);
@@ -549,18 +614,16 @@ void main() {
 			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 			// Compute the projection matrix
-			var projectionMatrix = getProjectionMatrix(gl);
+			projectionMatrix = getProjectionMatrix(gl);
 			
 			// Compute the camera's matrix using look at.
 			cameraMatrix = m4.lookAt(cameraPosition, target, up);
 
 			// Make a view matrix from the camera matrix.
-			var viewMatrix = m4.inverse(cameraMatrix);
-
-			var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
+			viewMatrix = m4.inverse(cameraMatrix);
 
 			// ------ Draw Objects --------
-			scene.render(time,viewProjectionMatrix);
+			scene.render(time);
 
 			requestAnimationFrame(render);
 		}
@@ -582,8 +645,8 @@ void main() {
 				orthoscale *= .99; 
 			}
 			else if (e.which == 'S'.charCodeAt(0)){ // Back
-				cameraPosition = vecAdd(cameraPosition,mult(normDir,-1));
-				target = vecAdd(target,mult(normDir,-1));
+				cameraPosition = vecAdd(cameraPosition,multByScalar(normDir,-1));
+				target = vecAdd(target,multByScalar(normDir,-1));
 				orthoscale *= 1.01; 
 			}
 			else if (e.which == 'A'.charCodeAt(0)){ // left
@@ -610,10 +673,6 @@ void main() {
 					target = vecAdd(cameraPosition,newDir);
 				}
 			}
-			else if (e.which == 'T'.charCodeAt(0)){
-			}
-			else if (e.which == 'G'.charCodeAt(0)){
-			}
 			else if (e.which == 'O'.charCodeAt(0)){
 				console.log('Orthographic');
 				view = viewTypes['Orthographic'];
@@ -625,6 +684,30 @@ void main() {
 			else if (e.which == 'X'.charCodeAt(0)){
 				var dis = document.getElementById("sidebar").style.display ;
 				document.getElementById("sidebar").style.display = dis != "none" ? "none":"block";
+			}
+			else if (e.which == 'M'.charCodeAt(0)){
+				light1Pos[0] += 10;
+			}
+			else if (e.which == 'B'.charCodeAt(0)){
+				light1Pos[0] -= 10;
+			}
+			else if (e.which == 'H'.charCodeAt(0)){
+				light1Pos[1] += 10;
+			}
+			else if (e.which == 'N'.charCodeAt(0)){
+				light1Pos[1] -= 10;
+			}
+			else if (e.which == 'J'.charCodeAt(0)){
+				light1Pos[2] += 10;
+			}
+			else if (e.which == 'G'.charCodeAt(0)){
+				light1Pos[2] -= 10;
+			}
+			else if (e.which == 'Z'.charCodeAt(0)){
+				light1Pos[0] = cameraPosition[0];
+				light1Pos[1] = cameraPosition[1];
+				light1Pos[2] = cameraPosition[2];
+				console.log(cameraPosition,light1Pos);
 			}
 		};
 
