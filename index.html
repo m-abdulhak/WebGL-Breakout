@@ -192,11 +192,10 @@ void main() {
 	var lightSpecular = multByScalar(lightColor, 1.0);;
 
 	// Shadows
-	var m;
-    m = mat4();
-    console.log(m);
-	m[3][3] = 0;
-    m[3][2] = -1/lightPosition[2];
+	var xyPlaneShadowsTransformationMatrix;
+    xyPlaneShadowsTransformationMatrix = mat4();
+	xyPlaneShadowsTransformationMatrix[3][3] = 0;
+    xyPlaneShadowsTransformationMatrix[3][2] = -1/lightPosition[2];
 
 	function degToRad(d){
 
@@ -647,7 +646,7 @@ void main() {
 				var para2 = translate(lightPosition[0], lightPosition[1], lightPosition[2]);
 				var shadow_modelViewMatrix = mult(para1, para2);
 				//console.log("modelViewMatrix:",para1,"translate:",para2,"modelViewMatrix",shadow_modelViewMatrix)
-				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, m);
+				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, xyPlaneShadowsTransformationMatrix);
 				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, translate(-lightPosition[0], -lightPosition[1],-lightPosition[2]));
 				
 				this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
