@@ -83,31 +83,42 @@ uniform mat4 u_matrix;
 uniform mat4 u_modelViewMatrix;
 uniform mat4 u_projectionMatrix;
 
-//uniform mat4 u_worldInverseTranspose;
-uniform vec4 u_lightPosition;
 uniform vec3 u_viewWorldPosition;
 
+// TODO: change to array
+uniform vec4 u_lightPosition0;
+uniform vec4 u_lightPosition1;
+uniform vec4 u_lightPosition2;
+uniform vec4 u_lightPosition3;
+
 varying vec3 v_normal;
-varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToLight[4];
 varying vec3 v_surfaceToView;
 
 void main() {
-  // Multiply the position by the matrix.
-  gl_Position = u_projectionMatrix * u_modelViewMatrix * u_matrix * a_position;
+	// Multiply the position by the matrix.
+	gl_Position = u_projectionMatrix * u_modelViewMatrix * u_matrix * a_position;
 
-  // orient the normals and pass to the fragment shader
-  v_normal = mat3(u_matrix) * a_normal.xyz;
+	// orient the normals and pass to the fragment shader
+	v_normal = mat3(u_matrix) * a_normal.xyz;
 
-  // compute the world position of the surfoace
-  vec3 surfaceWorldPosition = (u_matrix * a_position).xyz;
+	// compute the world position of the surfoace
+	vec3 surfaceWorldPosition = (u_matrix * a_position).xyz;
 
-  // compute the vector of the surface to the light
-  // and pass it to the fragment shader
-  v_surfaceToLight = u_lightPosition.xyz - surfaceWorldPosition;
-  
-  // compute the vector of the surface to the view/camera
-  // and pass it to the fragment shader
-  v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
+	// compute the vector of the surface to the light
+	// and pass it to the fragment shader	
+	vec4 lightPositions[4];
+	lightPositions[0] = u_lightPosition0;
+	lightPositions[1] = u_lightPosition1;
+	lightPositions[2] = u_lightPosition2;
+	lightPositions[3] = u_lightPosition3;
+	for(int i = 0; i < 4; i++) {
+		v_surfaceToLight[i] = lightPositions[i].xyz - surfaceWorldPosition;
+	}
+
+	// compute the vector of the surface to the view/camera
+	// and pass it to the fragment shader
+	v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
 }
 </script>
 
@@ -116,49 +127,94 @@ void main() {
 precision mediump float;
 
 uniform vec4 u_surfaceColor;
-uniform vec3 u_ambientColor;
-uniform vec3 u_diffuseColor;
-uniform vec3 u_specularColor;
 uniform float u_shininess;
 uniform float u_shadow;
 
+// TODO: change to arrays
+uniform vec3 u_ambientColor0;
+uniform vec3 u_diffuseColor0;
+uniform vec3 u_specularColor0;
+
+uniform vec3 u_ambientColor1;
+uniform vec3 u_diffuseColor1;
+uniform vec3 u_specularColor1;
+
+uniform vec3 u_ambientColor2;
+uniform vec3 u_diffuseColor2;
+uniform vec3 u_specularColor2;
+
+uniform vec3 u_ambientColor3;
+uniform vec3 u_diffuseColor3;
+uniform vec3 u_specularColor3;
+
 // Passed in from the vertex shader.
 varying vec3 v_normal;
-varying vec3 v_surfaceToLight;
+varying vec3 v_surfaceToLight[4];
 varying vec3 v_surfaceToView;
 
 void main() {
-  // because v_normal is a varying it's interpolated
-  // so it will not be a unit vector. Normalizing it
-  // will make it a unit vector again
-  vec3 normal = normalize(v_normal);
-  
-  vec3 surfaceToLightDirection = normalize(v_surfaceToLight);
-  vec3 surfaceToViewDirection = normalize(v_surfaceToView);
-  vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
+	// TODO: remove after changing uniforms into arrays
+	vec3 diffuseColors[4];
+	diffuseColors[0] = u_diffuseColor0;
+	diffuseColors[1] = u_diffuseColor1;
+	diffuseColors[2] = u_diffuseColor2;
+	diffuseColors[3] = u_diffuseColor3;
+	vec3 specularColors[4];
+	specularColors[0] = u_specularColor0;
+	specularColors[1] = u_specularColor1;
+	specularColors[2] = u_specularColor2;
+	specularColors[3] = u_specularColor3;
+	vec3 ambientColors[4];
+	ambientColors[0] = u_ambientColor0;
+	ambientColors[1] = u_ambientColor1;
+	ambientColors[2] = u_ambientColor2;
+	ambientColors[3] = u_ambientColor3;
 
-  float light = dot(normal, surfaceToLightDirection);
+	// because v_normal is a varying it's interpolated
+	// so it will not be a unit vector. Normalizing it
+	// will make it a unit vector again
+	vec3 normal = normalize(v_normal);
 
-  float specular = 0.0;
-  if (light > 0.0) {
-    specular = pow(dot(normal, halfVector), u_shininess);
-  }
-  
-  gl_FragColor = u_surfaceColor;
+	gl_FragColor = u_surfaceColor;
+	vec3 diffusedLights = vec3(0.0, 0.0, 0.0);
+	vec3 specularLights = vec3(0.0, 0.0, 0.0);
+	vec3 ambientLights = vec3(0.0, 0.0, 0.0);
 
-  // Lets multiply just the color portion (not the alpha)
-  // by the light
-  gl_FragColor.rgb *= light * u_diffuseColor ;
-  
-  // Just add in the specular
-  gl_FragColor.rgb += specular * u_specularColor;
+	for(int i = 0; i < 4; i++) {
+		vec3 surfaceToLightDirection = normalize(v_surfaceToLight[i]);
+		vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+		vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
 
-  // Add ambientColor
-  gl_FragColor.rgb += u_ambientColor;
+		float light = dot(normal, surfaceToLightDirection);
 
-  if(u_shadow==1.0){
-	gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-  }
+		float specular = 0.0;
+		if (light > 0.0) {
+			specular = pow(dot(normal, halfVector), u_shininess);
+		}
+
+		// Lets multiply just the color portion (not the alpha)
+		// by the light
+		diffusedLights.rgb += light * diffuseColors[i] ;
+
+		// Just add in the specular
+		specularLights.rgb += specular * specularColors[i];
+
+		// Add ambientColor
+		ambientLights.rgb += ambientColors[i];
+	}
+	
+	gl_FragColor.rgb *= diffusedLights ;
+
+	// Just add in the specular
+	gl_FragColor.rgb += specularLights;
+
+	// Add ambientColor
+	gl_FragColor.rgb += ambientLights;
+	
+	if(u_shadow==1.0){
+		gl_FragColor = vec4(.0, .0, .0, 1.0);
+		gl_FragColor.rgb += ambientLights;
+	}
 }
 </script>
 <script src="common/webgl-utils.js"></script>
@@ -185,17 +241,14 @@ void main() {
 	// My Lighting 
 	// Lighting
 	// vec4
-	var lightPosition = [70, 70, 40, 1.0 ];
-	var lightColor = [1., 1., 1.];
-	var lightAmbient = multByScalar(lightColor, 0.05);
-	var lightDiffuse = multByScalar(lightColor, 0.5);
-	var lightSpecular = multByScalar(lightColor, 1.0);;
+	var lightPosition = [[70, 70, 40, 1.0 ], [140, 140, 80, 1.0 ], [0, 140, 80, 1.0 ], [70, 70, 120, 1.0 ]];
+	var lightColor = [[1.0, 1.0, 1.0],[.0, .5, .0],[.0, .0, .5],[.5, .0, .0]];
+	var lightAmbient = [multByScalar(lightColor[0], 0.1), multByScalar(lightColor[1], 0.05), multByScalar(lightColor[2], 0.05), multByScalar(lightColor[3], 0.05)];
+	var lightDiffuse = [multByScalar(lightColor[0], 0.5), multByScalar(lightColor[1], 0.5), multByScalar(lightColor[2], 0.5), multByScalar(lightColor[3], 0.5)];
+	var lightSpecular = [multByScalar(lightColor[0], 1.0), multByScalar(lightColor[1], 1.0), multByScalar(lightColor[2], 1.0), multByScalar(lightColor[3], 1.0)];
 
 	// Shadows
-	var xyPlaneShadowsTransformationMatrix;
-    xyPlaneShadowsTransformationMatrix = mat4();
-	xyPlaneShadowsTransformationMatrix[3][3] = 0;
-    xyPlaneShadowsTransformationMatrix[3][2] = -1/lightPosition[2];
+	var xyPlaneShadowsTransformationMatrix = [];
 
 	function degToRad(d){
 
@@ -382,11 +435,11 @@ void main() {
 			this.programInfo = programInfo;
 			this.ShapeFactory = new ShapeFactory(gl,programInfo);
 			this.Positions = {
-				"Center" : [2.5,2.5,0.2],
-				"TopLeft" : [1,4,0.2],
-				"TopRight" : [4,4,0.2],
-				"BottomLeft" : [1,1,0.2],
-				"BottomRight" : [4,1,0.2]};
+				"Center" : [2.5,2.5,0.8],
+				"TopLeft" : [1,4,0.8],
+				"TopRight" : [4,4,0.8],
+				"BottomLeft" : [1,1,0.8],
+				"BottomRight" : [4,1,0.8]};
 			this.objects = [];
 		}
 
@@ -399,7 +452,7 @@ void main() {
 			var sF = this.ShapeFactory;
 
 			var position = this.getPosition(this.Positions.Center);
-			position[2]=-11.1;
+			position[2]=-1.1;
 			var parameters = sF.getDefaultsWith({"size":[50,50,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Mirror, "hasShadow": false});
 			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Red,parameters));
 
@@ -425,8 +478,8 @@ void main() {
 			this.objects.push(sF.createShape(sF.Shapes.Cone,position,sF.Colors.Magneta,parameters));
 
 			// Attach lights
-			position = [100,100,30];
-			parameters = sF.getDefaultsWith({"size":[.1,.1,.1], "scaleLimit": [10000,10000,10000], "speed":[10,20,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [0, 0,-1000]}, "material": sF.Materials.Light , "isLight": true, "lightIndex": 1});
+			position = [100,100,60];
+			parameters = sF.getDefaultsWith({"size":[.1,.1,.1], "scaleLimit": [10000,10000,10000], "speed":[10,20,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [0, 0,-1000]}, "material": sF.Materials.Light , "isLight": true, "lightIndex": 1, "hasShadow": false});
 			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Glowing,parameters));
 		}
 
@@ -476,9 +529,6 @@ void main() {
 
 			this.bufferInfo = this.flattenedVertices();
 			this.uniforms = {	u_surfaceColor: color,
-								u_lightPosition: lightPosition,
-								u_matrix: m4.identity(),
-								u_transformation_matrix: m4.identity()
 							};
 			this.position = position;
 			this.positionLimits = positionLimits;
@@ -542,8 +592,8 @@ void main() {
 		simulate(vector,changeRate,timeDelta){
 			if(this.enabled){
 				if(this.isLight) {
-					lightPosition = this.position;
-					lightPosition[3] = 1;
+					lightPosition[0] = this.position;
+					lightPosition[0][3] = 1;
 					//console.log('islight:',this.isLight,this.position,lightPosition)
 				}
 				return vecAdd(vector,multByScalar(changeRate,timeDelta));
@@ -615,18 +665,35 @@ void main() {
 			this.uniforms.u_projectionMatrix = projectionMatrix;
 			this.uniforms.u_viewWorldPosition = cameraPosition;
 
-			// Update my lighting parameters
-			var ambientProduct = mult(lightAmbient, this.materialAmbient);
-			var diffuseProduct = mult(lightDiffuse, this.materialDiffuse);
-			var specularProduct = mult(lightSpecular, this.materialSpecular);
+			var ambientProduct = [];
+			var diffuseProduct = [];
+			var specularProduct = [];
 
-			this.uniforms.u_lightPosition = lightPosition;			
-			this.uniforms.u_ambientColor = ambientProduct;
-			this.uniforms.u_diffuseColor = diffuseProduct;
-			this.uniforms.u_specularColor = specularProduct;
+			// Update my lighting parameters
+			for (let index = 0; index < lightAmbient.length; index++) {
+				ambientProduct[index] = mult(lightAmbient[index], this.materialAmbient);
+				diffuseProduct[index] = mult(lightDiffuse[index], this.materialDiffuse);
+				specularProduct[index] = mult(lightSpecular[index], this.materialSpecular);
+			}
+
+			this.uniforms.u_lightPosition0 = lightPosition[0];			
+			this.uniforms.u_ambientColor0 = ambientProduct[0];
+			this.uniforms.u_diffuseColor0 = diffuseProduct[0];
+			this.uniforms.u_specularColor0 = specularProduct[0];
+			this.uniforms.u_lightPosition1 = lightPosition[1];			
+			this.uniforms.u_ambientColor1 = ambientProduct[1];
+			this.uniforms.u_diffuseColor1 = diffuseProduct[1];
+			this.uniforms.u_specularColor1 = specularProduct[1];
+			this.uniforms.u_lightPosition2 = lightPosition[2];			
+			this.uniforms.u_ambientColor2 = ambientProduct[2];
+			this.uniforms.u_diffuseColor2 = diffuseProduct[2];
+			this.uniforms.u_specularColor2 = specularProduct[2];
+			this.uniforms.u_lightPosition3 = lightPosition[3];			
+			this.uniforms.u_ambientColor3 = ambientProduct[3];
+			this.uniforms.u_diffuseColor3 = diffuseProduct[3];
+			this.uniforms.u_specularColor3 = specularProduct[3];
 			this.uniforms.u_shininess = this.materialShininess;
 
-			
 			this.uniforms.u_shadow = 0.0;
 
 			// Set the uniforms we just computed
@@ -635,25 +702,33 @@ void main() {
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
 
 			if(this.hasShadow){
-				// model-view matrix for shadow then render
-				var black = vec4(0.0, 0.0, 0.0, 1.0);
-				var para1 = translate(lightPosition[0], lightPosition[1], lightPosition[2]);
-				var src = viewMatrix;
-				para1[0] = [src[0],src[4],src[8],src[12]];
-				para1[1] = [src[1],src[5],src[9],src[13]];
-				para1[2] = [src[2],src[6],src[10],src[14]];
-				para1[3] = [src[3],src[7],src[11],src[15]];
-				var para2 = translate(lightPosition[0], lightPosition[1], lightPosition[2]);
-				var shadow_modelViewMatrix = mult(para1, para2);
-				//console.log("modelViewMatrix:",para1,"translate:",para2,"modelViewMatrix",shadow_modelViewMatrix)
-				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, xyPlaneShadowsTransformationMatrix);
-				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, translate(-lightPosition[0], -lightPosition[1],-lightPosition[2]));
-				
-				this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
-				this.uniforms.u_shadow = 1.0;
-				
-				webglUtils.setUniforms(this.programInfo, this.uniforms);
-				this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+				for (let index = 0; index < lightPosition.length; index++) {
+					// model-view matrix for shadow then render
+					var black = vec4(0.0, 0.0, 0.0, 1.0);
+					var lightSource = lightPosition[index];
+					var para1 = translate(lightSource[0], lightSource[1], lightSource[2]);
+					var src = viewMatrix;
+					para1[0] = [src[0],src[4],src[8],src[12]];
+					para1[1] = [src[1],src[5],src[9],src[13]];
+					para1[2] = [src[2],src[6],src[10],src[14]];
+					para1[3] = [src[3],src[7],src[11],src[15]];
+					var para2 = translate(lightSource[0], lightSource[1], lightSource[2]);
+					var shadow_modelViewMatrix = mult(para1, para2);
+
+					xyPlaneShadowsTransformationMatrix[index] = mat4();
+					xyPlaneShadowsTransformationMatrix[index][3][3] = 0;
+					xyPlaneShadowsTransformationMatrix[index][3][2] = -1/lightPosition[index][2];
+	
+					//console.log("modelViewMatrix:",para1,"translate:",para2,"modelViewMatrix",shadow_modelViewMatrix)
+					shadow_modelViewMatrix = mult(shadow_modelViewMatrix, xyPlaneShadowsTransformationMatrix[index]);
+					shadow_modelViewMatrix = mult(shadow_modelViewMatrix, translate(-lightSource[0], -lightSource[1],-lightSource[2]));
+					
+					this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
+					this.uniforms.u_shadow = 1.0;
+					
+					webglUtils.setUniforms(this.programInfo, this.uniforms);
+					this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);					
+				}
 			}
 		}
 
