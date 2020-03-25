@@ -129,6 +129,7 @@ precision mediump float;
 uniform vec4 u_surfaceColor;
 uniform float u_shininess;
 uniform float u_shadow;
+uniform int u_shadow_light_index;
 
 // TODO: change to arrays
 uniform vec3 u_ambientColor0;
@@ -201,6 +202,12 @@ void main() {
 
 		// Add ambientColor
 		ambientLights.rgb += ambientColors[i];
+
+		// TODO: remove ambient light of current light under its shadow
+		// this does not work, causes flickering if overlaping with other shadows
+		if(u_shadow==1.0  && u_shadow_light_index == i){
+			//ambientLights.rgb -= ambientColors[i];
+		}
 	}
 	
 	gl_FragColor.rgb *= diffusedLights ;
@@ -725,6 +732,7 @@ void main() {
 					
 					this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
 					this.uniforms.u_shadow = 1.0;
+					this.uniforms.u_shadow_light_index = index;
 					
 					webglUtils.setUniforms(this.programInfo, this.uniforms);
 					this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);					
