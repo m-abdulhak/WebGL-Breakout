@@ -36,7 +36,7 @@
 </head>
 <body>
 <canvas id="canvas"></canvas>
-<div id="sidebar">
+<div id="sidebar" style="display: none;">
 	<h4>WebGL Transformations, Navigation and Projections</h4>
 	<span class="key">W - S</span> 
 	<br>
@@ -120,6 +120,7 @@ uniform vec3 u_ambientColor;
 uniform vec3 u_diffuseColor;
 uniform vec3 u_specularColor;
 uniform float u_shininess;
+uniform float u_shadow;
 
 // Passed in from the vertex shader.
 varying vec3 v_normal;
@@ -154,6 +155,10 @@ void main() {
 
   // Add ambientColor
   gl_FragColor.rgb += u_ambientColor;
+
+  if(u_shadow==1.0){
+	gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  }
 }
 </script>
 <script src="common/webgl-utils.js"></script>
@@ -166,7 +171,7 @@ void main() {
 
 	var scene;
 
-	var cameraPosition = [70, 70, 120];
+	var cameraPosition = [70, 70, 220];
 	var target = [cameraPosition[0], cameraPosition[1], cameraPosition[2]-1];
 	var up = [0, 100, 0];
 	var cameraMatrix = [];
@@ -185,6 +190,13 @@ void main() {
 	var lightAmbient = multByScalar(lightColor, 0.05);
 	var lightDiffuse = multByScalar(lightColor, 0.5);
 	var lightSpecular = multByScalar(lightColor, 1.0);;
+
+	// Shadows
+	var m;
+    m = mat4();
+    console.log(m);
+	m[3][3] = 0;
+    m[3][2] = -1/lightPosition[2];
 
 	function degToRad(d){
 
@@ -281,7 +293,8 @@ void main() {
 			material: {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
 				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
 				"materialSpecular" : [ .3, .3, .3 ],
-				"materialShininess" : 5.0}	,
+				"materialShininess" : 5.0},
+			hasShadow:true,
 			isLight: false};
 
 		this.Shapes = {
@@ -298,20 +311,26 @@ void main() {
 			"Yellow" : [1, 1, 0.1, 1],
 			"Magneta" : [1, 0.1, 1, 1],
 			"Gray" : [0.3, 0.3, 0.3, 1],
-			"Black" : [0.1, 0.1, 0.1, 1]};
+			"Black" : [0.1, 0.1, 0.1, 1],
+			"White" : [1.0, 1.0, 1.0, 1.0],
+			"Glowing" : [1, 1, 1, 1]};
 		this.Materials = {
-			"Shiny" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
-				"materialDiffuse" : [ 0.8, 0.8, 0.8 ],
-				"materialSpecular" : [ 1.0, 1.0, 1.0 ],
-				"materialShininess" : 10000.0},
 			"Matt" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
 				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
 				"materialSpecular" : [ 0.5, 0.5, 0.5 ],
 				"materialShininess" : 5.0},
-			"HalfShiny" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+			"Shiny" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
 				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
 				"materialSpecular" : [ 1.0, 1.0, 1.0 ],
-				"materialShininess" : 10.0}						
+				"materialShininess" : 10.0},
+			"Mirror" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+				"materialDiffuse" : [ 0.8, 0.8, 0.8 ],
+				"materialSpecular" : [ 1.0, 1.0, 1.0 ],
+				"materialShininess" : 10000.0},
+			"Light" : {	"materialAmbient" : [ 100.0, 100.0, 100.0 ],
+				"materialDiffuse" : [ 1.0, 1.0, 1.0 ],
+				"materialSpecular" : [ 100.0, 100.0, 100.0 ],
+				"materialShininess" : 1.0}						
 			};
 			this.DefaultColor = this.Colors.Red;
 		}
@@ -352,6 +371,7 @@ void main() {
 				settings.material.materialDiffuse,
 				settings.material.materialSpecular,
 				settings.material.materialShininess,
+				settings.hasShadow,
 				settings.isLight,		
 				settings.lightIndex);
 		}
@@ -363,11 +383,11 @@ void main() {
 			this.programInfo = programInfo;
 			this.ShapeFactory = new ShapeFactory(gl,programInfo);
 			this.Positions = {
-				"Center" : [2.5,2.5,0],
-				"TopLeft" : [1,4,0],
-				"TopRight" : [4,4,0],
-				"BottomLeft" : [1,1,0],
-				"BottomRight" : [4,1,0]};
+				"Center" : [2.5,2.5,0.2],
+				"TopLeft" : [1,4,0.2],
+				"TopRight" : [4,4,0.2],
+				"BottomLeft" : [1,1,0.2],
+				"BottomRight" : [4,1,0.2]};
 			this.objects = [];
 		}
 
@@ -380,29 +400,35 @@ void main() {
 			var sF = this.ShapeFactory;
 
 			var position = this.getPosition(this.Positions.Center);
-			position[2]=-15;
-			var parameters = sF.getDefaultsWith({"size":[8.5,8.5,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Shiny});
-			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters));
+			position[2]=-11.1;
+			var parameters = sF.getDefaultsWith({"size":[50,50,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Mirror, "hasShadow": false});
+			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Red,parameters));
 
 			position = this.getPosition(this.Positions.TopLeft);
 			parameters = sF.getDefaultsWith({"angularSpeed":[.1,.1,0]});
 			this.objects.push(sF.createShape(sF.Shapes.Cube,position,sF.Colors.Red,parameters));
 			
 			position = this.getPosition(this.Positions.TopRight);
-			parameters = sF.getDefaultsWith({"speed":[1,1,1],"angularSpeed":[-1,-1,-1],"sizeChangeRate":[1.1,1.005,1.005],"scaleLimit":[2,2,2]});
+			parameters = sF.getDefaultsWith({"speed":[1,1,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [100, 100,-1000]}, "angularSpeed":[-1,-1,-1],"sizeChangeRate":[1.1,1.005,1.005],"scaleLimit":[2,2,2], "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Pyramid,position,sF.Colors.Yellow,parameters));
 
 			position = this.getPosition(this.Positions.Center);
-			parameters = sF.getDefaultsWith({"speed":[10,0,0], "material": sF.Materials.HalfShiny, "isLight": false, "lightIndex": 1});
+			parameters = sF.getDefaultsWith({"speed":[10,0,0], "positionLimits" : {"Max": [120,70,1000] , "Min": [20,40,-1000]}, "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Green,parameters));
 
+
 			position = this.getPosition(this.Positions.BottomLeft);
-			parameters = sF.getDefaultsWith({"sizeChangeRate":[1.001,1.001,1.001], "scaleLimit": [1.2,1.2,1.2]});
+			parameters = sF.getDefaultsWith({"sizeChangeRate":[1.001,1.001,1.001], "scaleLimit": [1.2,1.2,1.2], "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Cylinder,position,sF.Colors.Blue,parameters));
 
 			position = this.getPosition(this.Positions.BottomRight);
 			parameters = sF.getDefaultsWith({"sizeChangeRate":[0.999,0.998,0.997], "scaleLimit": [1.2,1.2,1.2]});
 			this.objects.push(sF.createShape(sF.Shapes.Cone,position,sF.Colors.Magneta,parameters));
+
+			// Attach lights
+			position = [100,100,30];
+			parameters = sF.getDefaultsWith({"size":[.1,.1,.1], "scaleLimit": [10000,10000,10000], "speed":[10,20,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [0, 0,-1000]}, "material": sF.Materials.Light , "isLight": true, "lightIndex": 1});
+			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Glowing,parameters));
 		}
 
 		render(time){
@@ -438,6 +464,7 @@ void main() {
 					materialDiffuse = [ 1.0, 1.0, 1.0 ],
 					materialSpecular = [ 1.0, 1.0, 1.0 ],
 					materialShininess = 20.0,
+					hasShadow = true,
 					isLight = false,
 					lightIndex) {
 
@@ -472,6 +499,9 @@ void main() {
 			this.materialDiffuse = materialDiffuse;
 			this.materialSpecular = materialSpecular;
 			this.materialShininess = materialShininess;
+
+			// Shadow
+			this.hasShadow = hasShadow;
 			
 			// lighting
 			this.isLight = isLight;
@@ -513,7 +543,8 @@ void main() {
 		simulate(vector,changeRate,timeDelta){
 			if(this.enabled){
 				if(this.isLight) {
-					lightPosition = this.position.concat(1);
+					lightPosition = this.position;
+					lightPosition[3] = 1;
 					//console.log('islight:',this.isLight,this.position,lightPosition)
 				}
 				return vecAdd(vector,multByScalar(changeRate,timeDelta));
@@ -596,10 +627,35 @@ void main() {
 			this.uniforms.u_specularColor = specularProduct;
 			this.uniforms.u_shininess = this.materialShininess;
 
+			
+			this.uniforms.u_shadow = 0.0;
+
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
 
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+
+			if(this.hasShadow){
+				// model-view matrix for shadow then render
+				var black = vec4(0.0, 0.0, 0.0, 1.0);
+				var para1 = translate(lightPosition[0], lightPosition[1], lightPosition[2]);
+				var src = viewMatrix;
+				para1[0] = [src[0],src[4],src[8],src[12]];
+				para1[1] = [src[1],src[5],src[9],src[13]];
+				para1[2] = [src[2],src[6],src[10],src[14]];
+				para1[3] = [src[3],src[7],src[11],src[15]];
+				var para2 = translate(lightPosition[0], lightPosition[1], lightPosition[2]);
+				var shadow_modelViewMatrix = mult(para1, para2);
+				//console.log("modelViewMatrix:",para1,"translate:",para2,"modelViewMatrix",shadow_modelViewMatrix)
+				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, m);
+				shadow_modelViewMatrix = mult(shadow_modelViewMatrix, translate(-lightPosition[0], -lightPosition[1],-lightPosition[2]));
+				
+				this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
+				this.uniforms.u_shadow = 1.0;
+				
+				webglUtils.setUniforms(this.programInfo, this.uniforms);
+				this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+			}
 		}
 
 		computeMatrix( translation, rotation, scale){
