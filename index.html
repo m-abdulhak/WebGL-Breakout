@@ -19,9 +19,9 @@
 			position:fixed;
 			top:0px;
 			right: 0px;
-			background-color: #d3d3d37d;
+			background-color: #ffffffe8;
 			border: 1px #989898 solid;
-			font-size:1.5em;
+			font-size:1.2em;
 			text-align: center;
 			overflow: scroll;
 			line-height: 1.4em;
@@ -53,6 +53,33 @@
 			left: 0;
 			right: 0;
 			top: 40%;
+		}	
+		.slider {
+			-webkit-appearance: none;
+			width: 40%;
+			height: 25px;
+			background: #d3d3d3;
+			outline: none;
+			opacity: 0.7;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+		}
+		.slider:hover {
+			opacity: 1;
+		}
+		.slider::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			background: #4CAF50;
+			cursor: pointer;
+		}
+		.slider::-moz-range-thumb {
+			width: 25px;
+			height: 25px;
+			background: #4CAF50;
+			cursor: pointer;
 		}
 	</style>
 </head>
@@ -61,37 +88,38 @@
 <canvas id="canvas"></canvas>
 <div id="sidebar" style="display: none;">
 	<h4>WebGL Transformations, Navigation and Projections</h4>
-	<span class="key">W - S</span> 
-	<br>
-	<span class="action">Move Forwards / Backwards</span>
+	<span class="action"><span class="key">W - S</span>  Move Forwards / Backwards</span>
 	<br>
 	<br>
-	<span class="key">A - D</span> 
-	<br>
-	<span class="action">Turn Left / Right</span>
+	<span class="action"><span class="key">A - D</span>  Turn Left / Right</span>
 	<br>
 	<br>
-	<span class="key">E - Q</span> 
-	<br>
-	<span class="action">Look Up / Down</span>
+	<span class="action"><span class="key">E - Q</span>  Look Up / Down</span>
 	<br>
 	<br>
-	<span class="key">1 - 2 - 3 - 4 - 5</span> 
-	<br>
-	<span class="action">Toggle Animation For <br>Shapes (1-5)</span>
+	<span class="action"><span class="key">1 - 5</span>  Toggle Shapes (1-5) Animations </span>
 	<br>
 	<br>
-	<span class="key">O - P</span> 
-	<br>
-	<span class="action"><span id="ortho">Orthographic</span> / <span id="perspective" class="active">Perspective</span> </span>
+	<span class="action"><span class="key">O - P</span>  <span id="ortho">Orthographic</span> / <span id="perspective" class="active">Perspective</span> </span>
 	<br>
 	<br>
-	<span class="key">X</span> 
+	<span>Moving Light Intensity:  </span><input type="range" min="0.0" max="2.0" value=".1" step="0.1" class="slider" id="myRange0">
 	<br>
-	<span class="action">Show / Hide Sidebar</span>
+	<br>
+	<span>Moving Light Intensity:  </span><input type="range" min="0.0" max="2.0" value=".1" step="0.1" class="slider" id="myRange1">
+	<br>
+	<br>
+	<span>Moving Light Intensity:  </span><input type="range" min="0.0" max="2.0" value=".1" step="0.1" class="slider" id="myRange2">
+	<br>
+	<br>
+	<span>Moving Light Intensity:  </span><input type="range" min="0.0" max="2.0" value=".1" step="0.1" class="slider" id="myRange3">
+	<br>
+	<br>
+	<span class="action"><span class="key">X</span> Show / Hide Sidebar</span>
 	<br>
 	<br>
 	<span style="font-size: 0.6em;">Made By <a href="mailto:m_abdulhak@outlook.com">Mohammed Abdullhak</a></span>
+	<br>
 	<br>
 	<span style="font-size: 0.6em;"><a href="https://github.com/m-abdulhak/WebGLTransformations">Source Code</a></span>
 </div>
@@ -108,41 +136,7 @@ uniform mat4 u_projectionMatrix;
 
 uniform vec3 u_viewWorldPosition;
 
-// TODO: change to array
-uniform vec4 u_lightPosition0;
-uniform vec4 u_lightPosition1;
-uniform vec4 u_lightPosition2;
-uniform vec4 u_lightPosition3;
-
-// TODO: change to array
-uniform vec3 u_lightDirection0;
-uniform vec3 u_lightDirection1;
-uniform vec3 u_lightDirection2;
-uniform vec3 u_lightDirection3;
-
-// TODO: change to arrays
-uniform vec3 u_ambientColor0;
-uniform vec3 u_diffuseColor0;
-uniform vec3 u_specularColor0;
-
-uniform vec3 u_ambientColor1;
-uniform vec3 u_diffuseColor1;
-uniform vec3 u_specularColor1;
-
-uniform vec3 u_ambientColor2;
-uniform vec3 u_diffuseColor2;
-uniform vec3 u_specularColor2;
-
-uniform vec3 u_ambientColor3;
-uniform vec3 u_diffuseColor3;
-uniform vec3 u_specularColor3;
-
-// Pass to fragment shader
-varying vec4 lightPositions[4];
-varying vec3 lightDirections[4];
-varying vec3 diffuseColors[4];
-varying vec3 specularColors[4];
-varying vec3 ambientColors[4];
+uniform vec4 u_lightPositions[4];
 
 varying vec3 v_normal;
 varying vec3 v_surfaceToLight[4];
@@ -150,29 +144,6 @@ varying vec3 v_surfaceToView;
 
 
 void main() {
-	
-	// TODO: remove after changing uniforms into arrays
-	diffuseColors[0] = u_diffuseColor0;
-	diffuseColors[1] = u_diffuseColor1;
-	diffuseColors[2] = u_diffuseColor2;
-	diffuseColors[3] = u_diffuseColor3;
-	specularColors[0] = u_specularColor0;
-	specularColors[1] = u_specularColor1;
-	specularColors[2] = u_specularColor2;
-	specularColors[3] = u_specularColor3;
-	ambientColors[0] = u_ambientColor0;
-	ambientColors[1] = u_ambientColor1;
-	ambientColors[2] = u_ambientColor2;
-	ambientColors[3] = u_ambientColor3;
-	lightPositions[0] = u_lightPosition0;
-	lightPositions[1] = u_lightPosition1;
-	lightPositions[2] = u_lightPosition2;
-	lightPositions[3] = u_lightPosition3;
-	lightDirections[0] = u_lightDirection0;
-	lightDirections[1] = u_lightDirection1;
-	lightDirections[2] = u_lightDirection2;
-	lightDirections[3] = u_lightDirection3;
-
 	// Multiply the position by the matrix.
 	gl_Position = u_projectionMatrix * u_modelViewMatrix * u_matrix * a_position;
 
@@ -185,13 +156,12 @@ void main() {
 	// compute the vector of the surface to the light
 	// and pass it to the fragment shader	
 	for(int i = 0; i < 4; i++) {
-		v_surfaceToLight[i] = lightPositions[i].xyz - surfaceWorldPosition;
+		v_surfaceToLight[i] = u_lightPositions[i].xyz - surfaceWorldPosition;
 	}
 
 	// compute the vector of the surface to the view/camera
 	// and pass it to the fragment shader
 	v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
-	
 }
 </script>
 
@@ -206,19 +176,19 @@ uniform int u_shadow_light_index;
 uniform float u_spotlightInnerLimit;
 uniform float u_spotlightOuterLimit;
 
+uniform highp vec4 u_lightPositions[4];
+uniform highp vec3 u_lightDirections[4];
+
+uniform vec3 u_ambientColors[4];
+uniform vec3 u_diffuseColors[4];
+uniform vec3 u_specularColors[4];
+
 // Passed in from the vertex shader.
 varying vec3 v_normal;
 varying vec3 v_surfaceToLight[4];
 varying vec3 v_surfaceToView;
 
-varying vec4 lightPositions[4];
-varying vec3 lightDirections[4];
-varying vec3 diffuseColors[4];
-varying vec3 specularColors[4];
-varying vec3 ambientColors[4];
-
 void main() {
-
 	// because v_normal is a varying it's interpolated
 	// so it will not be a unit vector. Normalizing it
 	// will make it a unit vector again
@@ -238,10 +208,10 @@ void main() {
 
 		float coef = 1.0;
 
-		if(lightPositions[i].a == 0.0){
+		if(u_lightPositions[i].a == 0.0){
 			// check if current position is within spotlight limit 
-			vec3 lightDirectionsNorm = normalize(lightDirections[i]);
-			float dotFromDirection = dot(surfaceToLightDirection,-lightDirections[i]);
+			vec3 lightDirectionsNorm = normalize(u_lightDirections[i]);
+			float dotFromDirection = dot(surfaceToLightDirection,-u_lightDirections[i]);
 
 			coef = smoothstep(u_spotlightOuterLimit, u_spotlightInnerLimit, dotFromDirection);;
 		}
@@ -253,18 +223,19 @@ void main() {
 
 		// Lets multiply just the color portion (not the alpha)
 		// by the light
-		diffusedLights.rgb += light * diffuseColors[i] * coef;
+		diffusedLights.rgb += light * u_diffuseColors[i] * coef;
 
 		// Just add in the specular
-		specularLights.rgb += specular * specularColors[i] * coef;
+		specularLights.rgb += specular * u_specularColors[i] * coef;
 
 		// Add ambientColor
-		ambientLights.rgb += ambientColors[i] * coef;
+		ambientLights.rgb += u_ambientColors[i] * coef;
 		
 		// TODO: remove ambient light of current light under its shadow
 		// this does not work, causes flickering if overlaping with other shadows
 		if(u_shadow==1.0  && u_shadow_light_index == i){
-			//ambientLights.rgb -= ambientColors[i];
+			//ambientLights.rgb -= u_
+			u_ambientColors[i];
 		}
 	}
 	
@@ -310,10 +281,11 @@ void main() {
 	// vec4
 	var lightPosition = [[70, 70, 40, 1.0 ], [140, 140, 80, 1.0 ], [0, 140, 80, 1.0 ], [70, 70, 220, 0.0 ]];
 	var lightDirection = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0., 0., -1.0]];
-	var lightColor = [[1.0, 1.0, 1.0],[.5, .0, .0],[.0, .5, .0],[1.0, 1.0, 1.0]];
-	var lightAmbient = [multByScalar(lightColor[0], 0.1), multByScalar(lightColor[1], 0.05), multByScalar(lightColor[2], 0.05), multByScalar(lightColor[3], 0.05)];
-	var lightDiffuse = [multByScalar(lightColor[0], 0.3), multByScalar(lightColor[1], 0.3), multByScalar(lightColor[2], 0.3), multByScalar(lightColor[3], .5)];
-	var lightSpecular = [multByScalar(lightColor[0], .9), multByScalar(lightColor[1], .7), multByScalar(lightColor[2], .7), multByScalar(lightColor[3], 1.0)];
+	var lightColorBase = [[1.0, 1.0, 1.0],[.9, .1, .1],[.1, .9, .1],[1.0, 1.0, 1.0]];
+	var lightColor = [...lightColorBase];
+	var lightAmbient = [multByScalar(lightColor[0], 0.3), multByScalar(lightColor[1], 0.05), multByScalar(lightColor[2], 0.05), multByScalar(lightColor[3], 0.05)];
+	var lightDiffuse = [multByScalar(lightColor[0], 0.5), multByScalar(lightColor[1], 0.3), multByScalar(lightColor[2], 0.3), multByScalar(lightColor[3], .5)];
+	var lightSpecular = [multByScalar(lightColor[0], 1.0), multByScalar(lightColor[1], .7), multByScalar(lightColor[2], .7), multByScalar(lightColor[3], 1.0)];
 	var spotlightOuterLimit = 0.8;
 	var spotlightInnerLimit = 0.9;
 
@@ -524,7 +496,7 @@ void main() {
 			var position = this.getPosition(this.Positions.Center);
 			position[2]=-1.1;
 			var parameters = sF.getDefaultsWith({"size":[50,50,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Mirror, "hasShadow": false});
-			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Red,parameters));
+			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters));
 
 			position = this.getPosition(this.Positions.TopLeft);
 			parameters = sF.getDefaultsWith({"angularSpeed":[.1,.1,0]});
@@ -745,32 +717,23 @@ void main() {
 				diffuseProduct[index] = mult(lightDiffuse[index], this.materialDiffuse);
 				specularProduct[index] = mult(lightSpecular[index], this.materialSpecular);
 			}
-
-			this.uniforms.u_lightPosition0 = lightPosition[0];			
-			this.uniforms.u_lightDirection0 = lightDirection[0];			
-			this.uniforms.u_ambientColor0 = ambientProduct[0];
-			this.uniforms.u_diffuseColor0 = diffuseProduct[0];
-			this.uniforms.u_specularColor0 = specularProduct[0];
-			this.uniforms.u_lightPosition1 = lightPosition[1];		
-			this.uniforms.u_lightDirection1 = lightDirection[1];			
-			this.uniforms.u_ambientColor1 = ambientProduct[1];
-			this.uniforms.u_diffuseColor1 = diffuseProduct[1];
-			this.uniforms.u_specularColor1 = specularProduct[1];
-			this.uniforms.u_lightPosition2 = lightPosition[2];		
-			this.uniforms.u_lightDirection2 = lightDirection[2];			
-			this.uniforms.u_ambientColor2 = ambientProduct[2];
-			this.uniforms.u_diffuseColor2 = diffuseProduct[2];
-			this.uniforms.u_specularColor2 = specularProduct[2];
-			this.uniforms.u_lightPosition3 = lightPosition[3];		
-			this.uniforms.u_lightDirection3 = lightDirection[3];			
-			this.uniforms.u_ambientColor3 = ambientProduct[3];
-			this.uniforms.u_diffuseColor3 = diffuseProduct[3];
-			this.uniforms.u_specularColor3 = specularProduct[3];
+					
 			this.uniforms.u_shininess = this.materialShininess;
 
 			this.uniforms.u_shadow = 0.0;
 			this.uniforms.u_spotlightInnerLimit = spotlightInnerLimit;
 			this.uniforms.u_spotlightOuterLimit = spotlightOuterLimit;
+
+			var lightPositionsLocation = this.gl.getUniformLocation(this.programInfo.program, "u_lightPositions");
+			this.gl.uniform4fv(lightPositionsLocation,flatten(lightPosition));
+			var lightDirectionLocation = this.gl.getUniformLocation(this.programInfo.program, "u_lightDirections");
+			this.gl.uniform3fv(lightDirectionLocation,flatten(lightDirection));
+			var ambientProductLocation = this.gl.getUniformLocation(this.programInfo.program, "u_ambientColors");
+			this.gl.uniform3fv(ambientProductLocation,flatten(ambientProduct));
+			var diffuseProductLocation = this.gl.getUniformLocation(this.programInfo.program, "u_diffuseColors");
+			this.gl.uniform3fv(diffuseProductLocation,flatten(diffuseProduct));
+			var specularProductLocation = this.gl.getUniformLocation(this.programInfo.program, "u_specularColors");
+			this.gl.uniform3fv(specularProductLocation,flatten(specularProduct));
 
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
@@ -948,6 +911,31 @@ void main() {
 			return m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 		}
 	
+		var moveSpotLight = function (diffX, diffY) {
+			var dir = [-cameraPosition[0]+target[0],
+							-cameraPosition[1]+target[1],
+							-cameraPosition[2]+target[2],
+							0];
+
+			var normDir = normalize(dir);
+
+			var diff = [diffX,diffY];
+			var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
+
+			var newDirInCamerCoor = rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],diff[1]);
+			var newDirInCamerCoor = rotateY([newDirInCamerCoor[0],newDirInCamerCoor[1],newDirInCamerCoor[2]],diff[0]);
+			var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
+
+			//console.log("CamerDir:",normDir);
+			//console.log("dirInCamerCoor:",dirInCamerCoor);
+			//console.log("diff:",diff);
+			//console.log("CamerDir:",newDir);
+			//console.log("===================================");
+
+			lightDirection[3] = [newDir[0],newDir[1],newDir[2]];
+			lightPosition[3] = [cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0] ;
+		}
+	
 		document.onkeydown = function(e) {
 			var dir = [-cameraPosition[0]+target[0],
 							-cameraPosition[1]+target[1],
@@ -1036,9 +1024,9 @@ void main() {
 				lightPosition[2] -= 10;
 			}
 			else if (e.which == 'Z'.charCodeAt(0)){
-				lightPosition[0] = cameraPosition[0];
-				lightPosition[1] = cameraPosition[1];
-				lightPosition[2] = cameraPosition[2];
+				//lightPosition[0] = cameraPosition[0];
+				//lightPosition[1] = cameraPosition[1];
+				//lightPosition[2] = cameraPosition[2];
 				console.log(cameraPosition,lightPosition);
 			}
 			else if(e.keyCode == 32){
@@ -1065,29 +1053,31 @@ void main() {
 			moveSpotLight((event.pageX/gl.canvas.clientWidth - 0.5)*3.14/4, (event.pageY/gl.canvas.clientHeight-0.5)*3.14/4);
 		};
 
-		var moveSpotLight = function (diffX, diffY) {
-			var dir = [-cameraPosition[0]+target[0],
-							-cameraPosition[1]+target[1],
-							-cameraPosition[2]+target[2],
-							0];
+		var updateLights = function () {
+			lightAmbient = [multByScalar(lightColor[0], 0.1), multByScalar(lightColor[1], 0.05), multByScalar(lightColor[2], 0.05), multByScalar(lightColor[3], 0.05)];
+			lightDiffuse = [multByScalar(lightColor[0], 0.5), multByScalar(lightColor[1], 0.5), multByScalar(lightColor[2], 0.5), multByScalar(lightColor[3], .5)];
+			lightSpecular = [multByScalar(lightColor[0], 1.0), multByScalar(lightColor[1], 1.0), multByScalar(lightColor[2], 1.0), multByScalar(lightColor[3], 1.0)];
+		}
+		
+		var lightSliderChanged = function() {
+			var index = indexInClass("slider",this);
+			lightColor[index] = multByScalar(lightColorBase[index],this.value);
+			updateLights();
+		}
 
-			var normDir = normalize(dir);
-
-			var diff = [diffX,diffY];
-			var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
-
-			var newDirInCamerCoor = rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],diff[1]);
-			var newDirInCamerCoor = rotateY([newDirInCamerCoor[0],newDirInCamerCoor[1],newDirInCamerCoor[2]],diff[0]);
-			var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
-
-			console.log("CamerDir:",normDir);
-			console.log("dirInCamerCoor:",dirInCamerCoor);
-			console.log("diff:",diff);
-			console.log("CamerDir:",newDir);
-			console.log("===================================");
-
-			lightDirection[3] = [newDir[0],newDir[1],newDir[2]];
-			lightPosition[3] = [cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0] ;
+		var lightSliders = document.getElementsByClassName("slider");
+		
+		for (let index = 0; index < lightSliders.length; index++) {
+			lightSliders[index].oninput = lightSliderChanged;
+		}
+		
+		function indexInClass(collectionName, node) {
+			var collection = document.getElementsByClassName(collectionName);
+			for (var i = 0; i < collection.length; i++) {
+				if (collection[i] === node)
+				return i;
+			}
+			return -1;
 		}
 	}
 
