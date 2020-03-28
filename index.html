@@ -157,6 +157,33 @@
 	</div>
 	<br>
 	<br>
+	<div style="text-align: left;">
+		<h4 style="text-align: center;">Material Proprties - <span id="selected-shape-label"></span></h4>
+		<span class="material-properties-title">Choose Shape:</span><input type="range" min="0" max="5" value="0" step="1" class="slider shapeSelectionSlider" id="shape-selection-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Specular:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider materialPropertySlider" id="specular-property-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Diffuse:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider materialPropertySlider" id="diffuse-property-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Ambient:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider materialPropertySlider" id="ambient-property-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Shineness:</span><input type="range" min="0.0" max="2000.0" value="" step="10" class="slider materialPropertySlider" id="shineness-property-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Red:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider materialPropertySlider" id="red-property-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Green:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider materialPropertySlider" id="green-property-slider">
+		<br>
+		<br>
+		<span class="material-properties-title">Blue:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider materialPropertySlider" id="blue-property-slider">
+	</div>
+	<br>
+	<br>
 	<span class="action"><span class="key">X</span> Show / Hide Sidebar</span>
 	<br>
 	<br>
@@ -388,6 +415,10 @@ void main() {
 	// Shadows
 	var xyPlaneShadowsTransformationMatrix = [];
 
+	function copyOf(obj) {
+		return JSON.parse(JSON.stringify(obj));		
+	}
+
 	function degToRad(d){
 
 	    return d * Math.PI / 180;
@@ -540,7 +571,7 @@ void main() {
 		createShape = function(shape, location, color, parameters) {
 			// print shpae info
 			//console.log(shape);
-			const settings = parameters == null? this.DefShapeSettings : parameters;
+			const settings = parameters == null? copyOf(this.DefShapeSettings) : copyOf(parameters);
 			const col = color == null? this.defaultColor : color;
 			const loc = location;
 
@@ -563,7 +594,8 @@ void main() {
 				settings.material.materialShininess,
 				settings.hasShadow,
 				settings.isLight,		
-				settings.lightIndex);
+				settings.lightIndex,
+				settings.name);
 		}
 	}
 
@@ -591,28 +623,28 @@ void main() {
 
 			var position = this.getPosition(this.Positions.Center);
 			position[2]=-1.1;
-			var parameters = sF.getDefaultsWith({"size":[50,50,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Mirror, "hasShadow": false});
+			var parameters = sF.getDefaultsWith({"name": "Plane", "size":[50,50,.1], "scaleLimit": [100,100,100], "material": sF.Materials.Mirror, "hasShadow": false});
 			this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters));
 
 			position = this.getPosition(this.Positions.TopLeft);
-			parameters = sF.getDefaultsWith({"angularSpeed":[.1,.1,0]});
+			parameters = sF.getDefaultsWith({"name": "Cube","angularSpeed":[.1,.1,0]});
 			this.objects.push(sF.createShape(sF.Shapes.Cube,position,sF.Colors.Red,parameters));
 			
 			position = this.getPosition(this.Positions.TopRight);
-			parameters = sF.getDefaultsWith({"speed":[1,1,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [100, 100,-1000]}, "angularSpeed":[-1,-1,-1],"sizeChangeRate":[1.1,1.005,1.005],"scaleLimit":[2,2,2], "material": sF.Materials.Shiny});
+			parameters = sF.getDefaultsWith({"name": "Pyramid", "speed":[1,1,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [100, 100,-1000]}, "angularSpeed":[-1,-1,-1],"sizeChangeRate":[1.1,1.005,1.005],"scaleLimit":[2,2,2], "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Pyramid,position,sF.Colors.Yellow,parameters));
 
 			position = this.getPosition(this.Positions.Center);
-			parameters = sF.getDefaultsWith({"speed":[10,0,0], "positionLimits" : {"Max": [120,70,1000] , "Min": [20,40,-1000]}, "material": sF.Materials.Shiny});
+			parameters = sF.getDefaultsWith({"name": "Sphere", "speed":[10,0,0], "positionLimits" : {"Max": [120,70,1000] , "Min": [20,40,-1000]}, "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Green,parameters));
 
 
 			position = this.getPosition(this.Positions.BottomLeft);
-			parameters = sF.getDefaultsWith({"sizeChangeRate":[1.001,1.001,1.001], "scaleLimit": [1.2,1.2,1.2], "material": sF.Materials.Shiny});
+			parameters = sF.getDefaultsWith({"name": "Cylinder", "sizeChangeRate":[1.001,1.001,1.001], "scaleLimit": [1.2,1.2,1.2], "material": sF.Materials.Shiny});
 			this.objects.push(sF.createShape(sF.Shapes.Cylinder,position,sF.Colors.Blue,parameters));
 
 			position = this.getPosition(this.Positions.BottomRight);
-			parameters = sF.getDefaultsWith({"sizeChangeRate":[0.999,0.998,0.997], "scaleLimit": [1.2,1.2,1.2]});
+			parameters = sF.getDefaultsWith({"name": "Cone", "sizeChangeRate":[0.999,0.998,0.997], "scaleLimit": [1.2,1.2,1.2]});
 			this.objects.push(sF.createShape(sF.Shapes.Cone,position,sF.Colors.Magneta,parameters));
 
 			// Attach lights
@@ -656,7 +688,8 @@ void main() {
 					materialShininess = 20.0,
 					hasShadow = true,
 					isLight = false,
-					lightIndex) {
+					lightIndex,
+					name) {
 
 			this.gl = gl;
 			this.programInfo = programInfo;
@@ -664,6 +697,9 @@ void main() {
 			// Contains vertices' positions, normals, texcoords, and indices
 			this.vertices = vertices;
 			//console.log("vertices:",vertices);
+
+			this.color = color;
+			this.name = name;
 
 			this.bufferInfo = this.flattenedVertices();
 			this.uniforms = {	u_surfaceColor: color,
@@ -838,6 +874,7 @@ void main() {
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
 
 			if(this.hasShadow && shadingMode<2){
+				//this.gl.disable(this.gl.DEPTH_TEST);
 				for (let index = 0; index < lightPosition.length; index++) {
 					// if light is very dim do not render its shadow
 					// reduce function returns the summ of RGB intensities
@@ -871,6 +908,7 @@ void main() {
 					webglUtils.setUniforms(this.programInfo, this.uniforms);
 					this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);					
 				}
+				//this.gl.enable(this.gl.DEPTH_TEST);
 			}
 		}
 
@@ -1225,6 +1263,51 @@ void main() {
 		}
 
 		lightIntensitySlidersChanged();
+
+		var shapeSelectionSlider = document.getElementById("shape-selection-slider");
+		var matrialPropertiesSliders = document.getElementsByClassName("materialPropertySlider");
+		var selectedShape = shapeSelectionSlider.value;
+		
+		var updateMaterialProperties = function(){			
+			var shapeIndex = shapeSelectionSlider.value;
+			scene.objects[shapeIndex].materialSpecular[0] = document.getElementById("specular-property-slider").value;
+			scene.objects[shapeIndex].materialSpecular[1] = document.getElementById("specular-property-slider").value;
+			scene.objects[shapeIndex].materialSpecular[2] = document.getElementById("specular-property-slider").value;
+			scene.objects[shapeIndex].materialAmbient[0] = document.getElementById("diffuse-property-slider").value;
+			scene.objects[shapeIndex].materialAmbient[1] = document.getElementById("diffuse-property-slider").value;
+			scene.objects[shapeIndex].materialAmbient[2] = document.getElementById("diffuse-property-slider").value;
+			scene.objects[shapeIndex].materialDiffuse[0] = document.getElementById("ambient-property-slider").value;
+			scene.objects[shapeIndex].materialDiffuse[1] = document.getElementById("ambient-property-slider").value;
+			scene.objects[shapeIndex].materialDiffuse[2] = document.getElementById("ambient-property-slider").value;
+			scene.objects[shapeIndex].materialShininess = document.getElementById("shineness-property-slider").value;
+			scene.objects[shapeIndex].color[0] = document.getElementById("red-property-slider").value;
+			scene.objects[shapeIndex].color[1] = document.getElementById("green-property-slider").value;
+			scene.objects[shapeIndex].color[2] = document.getElementById("blue-property-slider").value;
+		}
+		
+		for (let index = 0; index < matrialPropertiesSliders.length; index++) {
+			matrialPropertiesSliders[index].oninput = updateMaterialProperties;
+		}
+
+		var updateMaterialPropertiesSliders = function(shapeIndex){
+			document.getElementById("selected-shape-label").textContent = scene.objects[shapeIndex].name;
+			document.getElementById("specular-property-slider").value = scene.objects[shapeIndex].materialSpecular[0];
+			document.getElementById("diffuse-property-slider").value = scene.objects[shapeIndex].materialAmbient[0];
+			document.getElementById("ambient-property-slider").value = scene.objects[shapeIndex].materialDiffuse[0];
+			document.getElementById("shineness-property-slider").value = scene.objects[shapeIndex].materialShininess;
+			document.getElementById("red-property-slider").value = scene.objects[shapeIndex].color[0];
+			document.getElementById("green-property-slider").value = scene.objects[shapeIndex].color[1];
+			document.getElementById("blue-property-slider").value = scene.objects[shapeIndex].color[2];
+		}
+
+		var selectedShapeChanged = function() {
+			var selectedShape = shapeSelectionSlider.value;
+			updateMaterialPropertiesSliders(selectedShape);
+		}
+		
+		shapeSelectionSlider.oninput = selectedShapeChanged;
+
+		selectedShapeChanged();
 		
 		function indexInClass(collectionName, node) {
 			var collection = document.getElementsByClassName(collectionName);
