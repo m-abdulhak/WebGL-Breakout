@@ -116,6 +116,9 @@
 	<br>	
 	<br>
 	<span class="action"><span class="key">Up - Down</span> Spotlight Radius</span>
+	<br>	
+	<br>
+	<span class="action"><span class="key">B - N - M - H - G - J</span> Move Center Light</span>
 	<br>
 	<div style="text-align: left;">
 		<h4 style="text-align: center;">Light Intensities:</h4>
@@ -649,7 +652,7 @@ void main() {
 
 			// Attach lights
 			position = [100,100,60];
-			parameters = sF.getDefaultsWith({"size":[.1,.1,.1], "scaleLimit": [10000,10000,10000], "speed":[10,20,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [0, 0,-1000]}, "material": sF.Materials.Light , "isLight": true, "lightIndex": 1, "hasShadow": false});
+			parameters = sF.getDefaultsWith({"size":[.1,.1,.1], "scaleLimit": [10000,10000,10000], "speed":[10,20,0], "positionLimits" : {"Max": [140, 140,1000] , "Min": [0, 0,-1000]}, "material": sF.Materials.Light , "isLight": true, "lightIndex": 0, "hasShadow": false});
 			this.objects.push(sF.createShape(sF.Shapes.Sphere,position,sF.Colors.Glowing,parameters));
 		}
 
