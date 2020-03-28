@@ -112,17 +112,39 @@
 	<span class="action"><span class="key">Space</span> Pause Scene</span>
 	<br>
 	<div style="text-align: left;">
-		<h4 style="text-align: center;">Lights:</h4>
-		<span class="light-intensity-title">Moving Light:</span><input type="range" min="0.0" max="2.0" value="1.0" step="0.1" class="slider" id="myRange0">
+		<h4 style="text-align: center;">Light Intensities:</h4>
+		<span class="light-intensity-title">Moving Light:</span><input type="range" min="0.0" max="2.0" value="1.0" step="0.1" class="slider lightIntensitySlider">
 		<br>
 		<br>
-		<span class="light-intensity-title">Top-Right Red:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider" id="myRange1">
+		<span class="light-intensity-title">Top-Right Red:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
 		<br>
 		<br>
-		<span class="light-intensity-title">Top-Left Green:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider" id="myRange2">
+		<span class="light-intensity-title">Top-Left Green:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
 		<br>
 		<br>
-		<span class="light-intensity-title">Spotlight:</span><input type="range" min="0.0" max="3.0" value=".3" step="0.1" class="slider" id="myRange3">
+		<span class="light-intensity-title">Spotlight:</span><input type="range" min="0.0" max="3.0" value=".3" step="0.1" class="slider lightIntensitySlider">
+	</div>
+	<div style="text-align: left;">
+		<h4 style="text-align: center;">Light Proprties:</h4>
+		<span class="light-intensity-title">Choose Light:</span><input type="range" min="0" max="3" value="0" step="1" class="slider lightSelectionSlider" id="light-selection-slider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Specular:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="specular-intensity-slider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Diffuse:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="diffuse-intensity-slider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Ambient:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="ambient-intensity-slider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Red:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="red-intensity-slider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Green:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="green-intensity-slider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Blue:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="blue-intensity-slider">
 	</div>
 	<br>
 	<br>
@@ -292,11 +314,17 @@ void main() {
 	// vec4
 	var lightPosition = [[70, 70, 40, 1.0 ], [140, 140, 80, 1.0 ], [0, 140, 80, 1.0 ], [70, 70, 220, 0.0 ]];
 	var lightDirection = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0., 0., -1.0]];
+
 	var lightColorBase = [[1.0, 1.0, 1.0],[.9, .2, .2],[.2, .9, .2],[1.0, 1.0, 1.0]];
 	var lightColor = [...lightColorBase];
-	var lightAmbient = [multByScalar(lightColor[0], 0.3), multByScalar(lightColor[1], 0.05), multByScalar(lightColor[2], 0.05), multByScalar(lightColor[3], 0.05)];
-	var lightDiffuse = [multByScalar(lightColor[0], 0.5), multByScalar(lightColor[1], 0.3), multByScalar(lightColor[2], 0.3), multByScalar(lightColor[3], .5)];
-	var lightSpecular = [multByScalar(lightColor[0], 1.0), multByScalar(lightColor[1], .7), multByScalar(lightColor[2], .7), multByScalar(lightColor[3], 1.0)];
+	
+	// Specular, Diffuse, Ambient Intensities
+	var lightProperties = [[1.0, 0.5, 0.05], [0.7, 0.3, 0.05], [0.7, 0.3, 0.05], [1.0, 0.5, 0.05]]
+	
+	var lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0])];
+	var lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1])];
+	var lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2])];
+	
 	var spotlightOuterLimit = 0.8;
 	var spotlightInnerLimit = 0.9;
 
@@ -1065,26 +1093,63 @@ void main() {
 		};
 
 		var updateLights = function () {
-			lightAmbient = [multByScalar(lightColor[0], 0.1), multByScalar(lightColor[1], 0.05), multByScalar(lightColor[2], 0.05), multByScalar(lightColor[3], 0.05)];
-			lightDiffuse = [multByScalar(lightColor[0], 0.5), multByScalar(lightColor[1], 0.5), multByScalar(lightColor[2], 0.5), multByScalar(lightColor[3], .5)];
-			lightSpecular = [multByScalar(lightColor[0], 1.0), multByScalar(lightColor[1], 1.0), multByScalar(lightColor[2], 1.0), multByScalar(lightColor[3], 1.0)];
+			lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0])];
+			lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1])];
+			lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2])];
 		}
 		
-		var lightSliders = document.getElementsByClassName("slider");
+		var lightIntensitySliders = document.getElementsByClassName("lightIntensitySlider");
+		var lightSelectionSlider = document.getElementById("light-selection-slider");
+		var lightPropertiesSliders = document.getElementsByClassName("lightPropertiesSlider");
+		var selectedLight = lightSelectionSlider.value;
 
-		var lightSliderChanged = function() {
-			for (let index = 0; index < lightSliders.length; index++) {
-				const element = lightSliders[index];
-				lightColor[index] = multByScalar(lightColorBase[index], lightSliders[index].value);				
-			}
+		var updateLightProperties = function(){			
+			var lightIndex = lightSelectionSlider.value;
+			lightProperties[lightIndex][0] = document.getElementById("specular-intensity-slider").value;
+			lightProperties[lightIndex][1] = document.getElementById("diffuse-intensity-slider").value;
+			lightProperties[lightIndex][2] = document.getElementById("ambient-intensity-slider").value;
+			lightColor[lightIndex][0] = document.getElementById("red-intensity-slider").value;
+			lightColor[lightIndex][1] = document.getElementById("green-intensity-slider").value;
+			lightColor[lightIndex][2] = document.getElementById("blue-intensity-slider").value;
 			updateLights();
 		}
 		
-		for (let index = 0; index < lightSliders.length; index++) {
-			lightSliders[index].oninput = lightSliderChanged;
+		for (let index = 0; index < lightPropertiesSliders.length; index++) {
+			lightPropertiesSliders[index].oninput = updateLightProperties;
 		}
 
-		lightSliderChanged();
+		var updateLightPropertiesSliders = function(lightIndex){
+			document.getElementById("specular-intensity-slider").value = lightProperties[lightIndex][0];
+			document.getElementById("diffuse-intensity-slider").value = lightProperties[lightIndex][1];
+			document.getElementById("ambient-intensity-slider").value = lightProperties[lightIndex][2];
+			document.getElementById("red-intensity-slider").value = lightColor[lightIndex][0];
+			document.getElementById("green-intensity-slider").value = lightColor[lightIndex][1];
+			document.getElementById("blue-intensity-slider").value = lightColor[lightIndex][2];
+		}
+
+		var selectedLightChanged = function() {
+			var selectedLight = lightSelectionSlider.value;
+			updateLightPropertiesSliders(selectedLight);
+		}
+
+		lightSelectionSlider.oninput = selectedLightChanged;
+
+		selectedLightChanged();
+
+		var lightIntensitySlidersChanged = function() {
+			for (let index = 0; index < lightIntensitySliders.length; index++) {
+				const element = lightIntensitySliders[index];
+				lightColor[index] = multByScalar(lightColorBase[index], lightIntensitySliders[index].value);				
+			}
+			updateLights();
+			selectedLightChanged();
+		}
+		
+		for (let index = 0; index < lightIntensitySliders.length; index++) {
+			lightIntensitySliders[index].oninput = lightIntensitySlidersChanged;
+		}
+
+		lightIntensitySlidersChanged();
 		
 		function indexInClass(collectionName, node) {
 			var collection = document.getElementsByClassName(collectionName);
