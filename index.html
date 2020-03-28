@@ -54,7 +54,7 @@
 			right: 0;
 			top: 40%;
 		}	
-		.light-intensity-title{
+		.light-intensity-title, .material-properties-title{
 			margin-left: 20px;
 			vertical-align: top;
 			width: 40%;
@@ -109,24 +109,33 @@
 	<span class="action"><span class="key">O - P</span>  <span id="ortho">Orthographic</span> / <span id="perspective" class="active">Perspective</span> </span>
 	<br>
 	<br>
+	<span class="action"><span class="key">F</span>  <span class="shading active">Smooth</span> / <span class="shading">Flat</span> / <span class="shading">Cell</span> Shading</span>
+	<br>
+	<br>
 	<span class="action"><span class="key">Space</span> Pause Scene</span>
+	<br>	
+	<br>
+	<span class="action"><span class="key">Up - Down</span> Spotlight Radius</span>
 	<br>
 	<div style="text-align: left;">
 		<h4 style="text-align: center;">Light Intensities:</h4>
 		<span class="light-intensity-title">Moving Light:</span><input type="range" min="0.0" max="2.0" value="1.0" step="0.1" class="slider lightIntensitySlider">
 		<br>
 		<br>
-		<span class="light-intensity-title">Top-Right Red:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
+		<span class="light-intensity-title">Right:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
 		<br>
 		<br>
-		<span class="light-intensity-title">Top-Left Green:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
+		<span class="light-intensity-title">Center:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
+		<br>
+		<br>
+		<span class="light-intensity-title">Left:</span><input type="range" min="0.0" max="2.0" value=".2" step="0.1" class="slider lightIntensitySlider">
 		<br>
 		<br>
 		<span class="light-intensity-title">Spotlight:</span><input type="range" min="0.0" max="3.0" value=".3" step="0.1" class="slider lightIntensitySlider">
 	</div>
 	<div style="text-align: left;">
-		<h4 style="text-align: center;">Light Proprties:</h4>
-		<span class="light-intensity-title">Choose Light:</span><input type="range" min="0" max="3" value="0" step="1" class="slider lightSelectionSlider" id="light-selection-slider">
+		<h4 style="text-align: center;">Light Proprties - <span id="selected-light-label"></span></h4>
+		<span class="light-intensity-title">Choose Light:</span><input type="range" min="0" max="4" value="0" step="1" class="slider lightSelectionSlider" id="light-selection-slider">
 		<br>
 		<br>
 		<span class="light-intensity-title">Specular:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="specular-intensity-slider">
@@ -159,6 +168,8 @@
 
 <!-- vertex shader -->
 <script  id="3d-vertex-shader" type="x-shader/x-vertex">
+varying vec3 vertex_view_space;
+
 attribute vec4 a_position;
 attribute vec4 a_normal;
 attribute vec4 a_color;
@@ -169,14 +180,18 @@ uniform mat4 u_projectionMatrix;
 
 uniform vec3 u_viewWorldPosition;
 
-uniform vec4 u_lightPositions[4];
+uniform vec4 u_lightPositions[5];
 
 varying vec3 v_normal;
-varying vec3 v_surfaceToLight[4];
+varying vec3 v_surfaceToLight[5];
 varying vec3 v_surfaceToView;
+varying vec4 v_face_color;
 
 
 void main() {
+	// For flat shading
+	vertex_view_space = ( u_modelViewMatrix * u_matrix * a_position).xyz;  
+
 	// Multiply the position by the matrix.
 	gl_Position = u_projectionMatrix * u_modelViewMatrix * u_matrix * a_position;
 
@@ -188,13 +203,19 @@ void main() {
 
 	// compute the vector of the surface to the light
 	// and pass it to the fragment shader	
-	for(int i = 0; i < 4; i++) {
+	for(int i = 0; i < 5; i++) {
 		v_surfaceToLight[i] = u_lightPositions[i].xyz - surfaceWorldPosition;
 	}
 
 	// compute the vector of the surface to the view/camera
 	// and pass it to the fragment shader
 	v_surfaceToView = u_viewWorldPosition - surfaceWorldPosition;
+	
+	// Pass face normal to the fragment shader for flat shading
+	//f_normal = a_normal;
+
+	// Pass face color to the fragment shader for simple shading
+	v_face_color = a_color;
 }
 </script>
 
@@ -202,24 +223,30 @@ void main() {
 <script  id="3d-fragment-shader" type="x-shader/x-fragment">
 precision mediump float;
 
+#extension GL_OES_standard_derivatives : enable
+
+varying vec3 vertex_view_space;
+
 uniform vec4 u_surfaceColor;
 uniform float u_shininess;
 uniform float u_shadow;
 uniform int u_shadow_light_index;
 uniform float u_spotlightInnerLimit;
 uniform float u_spotlightOuterLimit;
+uniform int u_shading_mode;
 
-uniform highp vec4 u_lightPositions[4];
-uniform highp vec3 u_lightDirections[4];
+uniform highp vec4 u_lightPositions[5];
+uniform highp vec3 u_lightDirections[5];
 
-uniform vec3 u_ambientColors[4];
-uniform vec3 u_diffuseColors[4];
-uniform vec3 u_specularColors[4];
+uniform vec3 u_ambientColors[5];
+uniform vec3 u_diffuseColors[5];
+uniform vec3 u_specularColors[5];
 
 // Passed in from the vertex shader.
 varying vec3 v_normal;
-varying vec3 v_surfaceToLight[4];
+varying vec3 v_surfaceToLight[5];
 varying vec3 v_surfaceToView;
+varying vec4 v_face_color;
 
 void main() {
 	// because v_normal is a varying it's interpolated
@@ -227,63 +254,73 @@ void main() {
 	// will make it a unit vector again
 	vec3 surfaceNormal = normalize(v_normal);
 
+	if(u_shading_mode == 1){
+		vec3 U = dFdx(vertex_view_space);                     
+		vec3 V = dFdy(vertex_view_space);                 
+		surfaceNormal = normalize(cross(U,V));
+	}
+
 	gl_FragColor = u_surfaceColor;
-	vec3 diffusedLights = vec3(0.0, 0.0, 0.0);
-	vec3 specularLights = vec3(0.0, 0.0, 0.0);
-	vec3 ambientLights = vec3(0.0, 0.0, 0.0);
 
-	for(int i = 0; i < 4; i++) {
-		vec3 surfaceToLightDirection = normalize(v_surfaceToLight[i]);
-		vec3 surfaceToViewDirection = normalize(v_surfaceToView);
-		vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
+	if(u_shading_mode < 2){
+		vec3 diffusedLights = vec3(0.0, 0.0, 0.0);
+		vec3 specularLights = vec3(0.0, 0.0, 0.0);
+		vec3 ambientLights = vec3(0.0, 0.0, 0.0);
 
-		float light = dot(surfaceNormal, surfaceToLightDirection);
+		for(int i = 0; i < 5; i++) {
+			vec3 surfaceToLightDirection = normalize(v_surfaceToLight[i]);
+			vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+			vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
 
-		float coef = 1.0;
+			float light = dot(surfaceNormal, surfaceToLightDirection);
 
-		if(u_lightPositions[i].a == 0.0){
-			// check if current position is within spotlight limit 
-			vec3 lightDirectionsNorm = normalize(u_lightDirections[i]);
-			float dotFromDirection = dot(surfaceToLightDirection,-u_lightDirections[i]);
+			float coef = 1.0;
 
-			coef = smoothstep(u_spotlightOuterLimit, u_spotlightInnerLimit, dotFromDirection);;
+			if(u_lightPositions[i].a == 0.0){
+				// check if current position is within spotlight limit 
+				vec3 lightDirectionsNorm = normalize(u_lightDirections[i]);
+				float dotFromDirection = dot(surfaceToLightDirection,-u_lightDirections[i]);
+
+				coef = smoothstep(u_spotlightOuterLimit, u_spotlightInnerLimit, dotFromDirection);;
+			}
+
+			float specular = 0.0;
+			if (light > 0.0) {
+				specular = pow(dot(surfaceNormal, halfVector), u_shininess);
+			}
+
+			// Lets multiply just the color portion (not the alpha)
+			// by the light
+			diffusedLights.rgb += light * u_diffuseColors[i] * coef;
+
+			// Just add in the specular
+			specularLights.rgb += specular * u_specularColors[i] * coef;
+
+			// Add ambientColor
+			ambientLights.rgb += u_ambientColors[i] * coef;
+			
+			// TODO: remove ambient light of current light under its shadow
+			// this does not work, causes flickering if overlaping with other shadows
+			//if(u_shadow==1.0  && u_shadow_light_index == i){
+				//ambientLights.rgb -= u_ambientColors[i];
+			//}
 		}
-
-		float specular = 0.0;
-		if (light > 0.0) {
-			specular = pow(dot(surfaceNormal, halfVector), u_shininess);
-		}
-
-		// Lets multiply just the color portion (not the alpha)
-		// by the light
-		diffusedLights.rgb += light * u_diffuseColors[i] * coef;
+		
+		gl_FragColor.rgb *= diffusedLights ;
 
 		// Just add in the specular
-		specularLights.rgb += specular * u_specularColors[i] * coef;
+		gl_FragColor.rgb += specularLights;
 
 		// Add ambientColor
-		ambientLights.rgb += u_ambientColors[i] * coef;
-		
-		// TODO: remove ambient light of current light under its shadow
-		// this does not work, causes flickering if overlaping with other shadows
-		if(u_shadow==1.0  && u_shadow_light_index == i){
-			//ambientLights.rgb -= u_
-			u_ambientColors[i];
-		}
-	}
-	
-	gl_FragColor.rgb *= diffusedLights ;
-
-	// Just add in the specular
-	gl_FragColor.rgb += specularLights;
-
-	// Add ambientColor
-	gl_FragColor.rgb += ambientLights;
-	
-	// if redndering a shoadow only keep ambientLights
-	if(u_shadow==1.0){
-		gl_FragColor = vec4(.0, .0, .0, 1.0);
 		gl_FragColor.rgb += ambientLights;
+		
+		// if redndering a shoadow only keep ambientLights
+		if(u_shadow==1.0){
+			gl_FragColor = vec4(.0, .0, .0, 1.0);
+			gl_FragColor.rgb += ambientLights;
+		}
+	} else if (u_shading_mode == 2){
+		gl_FragColor *= v_face_color;
 	}
 }
 </script>
@@ -297,6 +334,7 @@ void main() {
 
 	var scene;
 	var paused = false;
+	var shadingMode = 0;
 
 	var cameraPosition = [70, 70, 220];
 	var target = [cameraPosition[0], cameraPosition[1], cameraPosition[2]-1];
@@ -312,18 +350,37 @@ void main() {
 	// My Lighting 
 	// Lighting
 	// vec4
-	var lightPosition = [[70, 70, 40, 1.0 ], [140, 140, 80, 1.0 ], [0, 140, 80, 1.0 ], [70, 70, 220, 0.0 ]];
-	var lightDirection = [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0., 0., -1.0]];
+	// TODO: Refactor into class
+	var lightPosition = [	[70, 70, 40, 1.0 ], 
+							[140, 140, 80, 1.0 ], 
+							[70, 140, 80, 1.0 ], 
+							[0, 140, 80, 1.0 ], 
+							[70, 70, 220, 0.0 ]];
 
-	var lightColorBase = [[1.0, 1.0, 1.0],[.9, .2, .2],[.2, .9, .2],[1.0, 1.0, 1.0]];
+	var lightDirection = [	[0.0, 0.0, 0.0], 
+							[0.0, 0.0, 0.0], 
+							[0.0, 0.0, 0.0], 
+							[0.0, 0.0, 0.0], 
+							[0., 0., -1.0]];
+
+	var lightColorBase = [	[1.0, 1.0, 1.0], 
+							[.9, .2, .2], 
+							[.2, .2, .9], 
+							[.2, .9, .2], 
+							[1.0, 1.0, 1.0]];
+
 	var lightColor = [...lightColorBase];
 	
 	// Specular, Diffuse, Ambient Intensities
-	var lightProperties = [[1.0, 0.5, 0.05], [0.7, 0.3, 0.05], [0.7, 0.3, 0.05], [1.0, 0.5, 0.05]]
+	var lightProperties = [	[1.0, 0.5, 0.05], 
+							[0.7, 0.3, 0.05], 
+							[0.7, 0.3, 0.05], 
+							[0.7, 0.3, 0.05], 
+							[1.0, 0.5, 0.05]];
 	
-	var lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0])];
-	var lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1])];
-	var lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2])];
+	var lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0]), multByScalar(lightColor[4], lightProperties[4][0])];
+	var lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1]), multByScalar(lightColor[4], lightProperties[4][1])];
+	var lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2]), multByScalar(lightColor[4], lightProperties[4][2])];
 	
 	var spotlightOuterLimit = 0.8;
 	var spotlightInnerLimit = 0.9;
@@ -741,6 +798,7 @@ void main() {
 			    this.rotation,
 				this.scale);
 				
+			this.uniforms.u_shading_mode = shadingMode;
 			this.uniforms.u_transformation_matrix = transfMatrix;
 			this.uniforms.u_modelViewMatrix = viewMatrix;
 			this.uniforms.u_projectionMatrix = projectionMatrix;
@@ -779,7 +837,7 @@ void main() {
 
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
 
-			if(this.hasShadow){
+			if(this.hasShadow && shadingMode<2){
 				for (let index = 0; index < lightPosition.length; index++) {
 					// if light is very dim do not render its shadow
 					// reduce function returns the summ of RGB intensities
@@ -851,6 +909,10 @@ void main() {
 		if (!gl) {
 			return;
 		}
+		gl.getExtension('OES_standard_derivatives');
+		console.log(gl.getParameter(gl.VERSION));
+		console.log(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
+		console.log(gl.getParameter(gl.VENDOR));
 
 		// setup GLSL program
 		var programInfo = webglUtils.createProgramInfo(gl, ["3d-vertex-shader", "3d-fragment-shader"]);
@@ -971,8 +1033,8 @@ void main() {
 			//console.log("CamerDir:",newDir);
 			//console.log("===================================");
 
-			lightDirection[3] = [newDir[0],newDir[1],newDir[2]];
-			lightPosition[3] = [cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0] ;
+			lightDirection[4] = [newDir[0],newDir[1],newDir[2]];
+			lightPosition[4] = [cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0] ;
 		}
 	
 		document.onkeydown = function(e) {
@@ -1062,6 +1124,18 @@ void main() {
 			else if (e.which == 'G'.charCodeAt(0)){
 				lightPosition[2] -= 10;
 			}
+			else if (e.which == 'F'.charCodeAt(0)){
+				shadingMode = (shadingMode+1)%3;
+				var shadingSpans = document.getElementsByClassName("shading");
+				for (let index = 0; index < shadingSpans.length; index++) {
+					var element = shadingSpans[index];
+					if(index == shadingMode){
+						element.classList.add("active");
+					} else{
+						element.classList.remove("active");
+					}
+				}
+			}
 			else if (e.which == 'Z'.charCodeAt(0)){
 				//lightPosition[0] = cameraPosition[0];
 				//lightPosition[1] = cameraPosition[1];
@@ -1093,9 +1167,9 @@ void main() {
 		};
 
 		var updateLights = function () {
-			lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0])];
-			lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1])];
-			lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2])];
+			lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0]), multByScalar(lightColor[4], lightProperties[4][0])];
+			lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1]), multByScalar(lightColor[4], lightProperties[4][1])];
+			lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2]), multByScalar(lightColor[4], lightProperties[4][2])];
 		}
 		
 		var lightIntensitySliders = document.getElementsByClassName("lightIntensitySlider");
@@ -1119,6 +1193,7 @@ void main() {
 		}
 
 		var updateLightPropertiesSliders = function(lightIndex){
+			document.getElementById("selected-light-label").textContent = document.getElementsByClassName("light-intensity-title")[lightIndex].textContent;
 			document.getElementById("specular-intensity-slider").value = lightProperties[lightIndex][0];
 			document.getElementById("diffuse-intensity-slider").value = lightProperties[lightIndex][1];
 			document.getElementById("ambient-intensity-slider").value = lightProperties[lightIndex][2];
