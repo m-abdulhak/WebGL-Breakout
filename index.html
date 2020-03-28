@@ -343,7 +343,7 @@ void main() {
 		
 		// if redndering a shoadow only keep ambientLights
 		if(u_shadow==1.0){
-			gl_FragColor = vec4(.0, .0, .0, 1.0);
+			gl_FragColor = vec4(.1, .1, .1, .2);
 			gl_FragColor.rgb += ambientLights;
 		}
 	} else if (u_shading_mode == 2){
@@ -766,8 +766,8 @@ void main() {
 		simulate(vector,changeRate,timeDelta){
 			if(this.enabled){
 				if(this.isLight) {
-					lightPosition[0] = this.position;
-					lightPosition[0][3] = 1;
+					lightPosition[this.lightIndex] = this.position;
+					lightPosition[this.lightIndex][3] = 1;
 					//console.log('islight:',this.isLight,this.position,lightPosition)
 				}
 				return vecAdd(vector,multByScalar(changeRate,timeDelta));
@@ -871,14 +871,18 @@ void main() {
 			// Set the uniforms we just computed
 			webglUtils.setUniforms(this.programInfo, this.uniforms);
 
+			this.gl.depthMask(true);
 			this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+			this.gl.depthMask(false);
 
 			if(this.hasShadow && shadingMode<2){
-				//this.gl.disable(this.gl.DEPTH_TEST);
+				this.gl.enable(this.gl.BLEND);
+				this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_COLOR);
+
 				for (let index = 0; index < lightPosition.length; index++) {
 					// if light is very dim do not render its shadow
 					// reduce function returns the summ of RGB intensities
-					if(lightColor[index].reduce((a,b) => a + b, 0) < 0.1)
+					if(lightColor[index].reduce((a,b) => a + b, 0) < 0.1 || lightPosition[index][2] < 0)
 						continue;
 
 					// model-view matrix for shadow then render
@@ -909,6 +913,7 @@ void main() {
 					this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);					
 				}
 				//this.gl.enable(this.gl.DEPTH_TEST);
+				this.gl.disable(this.gl.BLEND);
 			}
 		}
 
@@ -960,12 +965,6 @@ void main() {
 		scene.createObjects();
 
 		requestAnimationFrame(render);
-
-		function setLight1Tocamera() {
-			lightPosition[0] = cameraPosition[0];
-			lightPosition[1] = cameraPosition[1];
-			lightPosition[2] = cameraPosition[2];
-		}
 
 		// Draw the scene.
 		function render(time) {
@@ -1090,26 +1089,22 @@ void main() {
 				cameraPosition = vecAdd(cameraPosition,normDir);
 				target = vecAdd(target,normDir);
 				orthoscale *= .99; 
-				//setLight1Tocamera();
 				moveSpotLight(0,0);
 			}
 			else if (e.which == 'S'.charCodeAt(0)){ // Back
 				cameraPosition = vecAdd(cameraPosition,multByScalar(normDir,-1));
 				target = vecAdd(target,multByScalar(normDir,-1));
 				orthoscale *= 1.01;
-				//setLight1Tocamera(); 
 				moveSpotLight(0,0);
 			}
 			else if (e.which == 'A'.charCodeAt(0)){ // left
 				var newDir = rotateY(normDir,-0.2);
 				target = vecAdd(cameraPosition,newDir);
-				//setLight1Tocamera();
 				moveSpotLight(0,0);
 			}
 			else if (e.which == 'D'.charCodeAt(0)){ // right
 				var newDir = rotateY(normDir,0.2);
 				target = vecAdd(cameraPosition,newDir);
-				//setLight1Tocamera();
 				moveSpotLight(0,0);
 			}
 			else if (e.which == 'E'.charCodeAt(0)){ // up
@@ -1119,7 +1114,6 @@ void main() {
 				if(newDir[1]<0.8){
 					target = vecAdd(cameraPosition,newDir);
 				}
-				//setLight1Tocamera();
 				moveSpotLight(0,0);
 			}
 			else if (e.which == 'Q'.charCodeAt(0)){ // down
@@ -1129,7 +1123,6 @@ void main() {
 				if(newDir[1]>-0.8){
 					target = vecAdd(cameraPosition,newDir);
 				}
-				//setLight1Tocamera();
 				moveSpotLight(0,0);
 			}
 			else if (e.which == 'O'.charCodeAt(0)){
@@ -1145,22 +1138,24 @@ void main() {
 				document.getElementById("sidebar").style.display = dis != "none" ? "none":"block";
 			}
 			else if (e.which == 'M'.charCodeAt(0)){
-				lightPosition[0] += 10;
+				lightPosition[2][0] += 10;
 			}
 			else if (e.which == 'B'.charCodeAt(0)){
-				lightPosition[0] -= 10;
+				lightPosition[2][0] -= 10;
 			}
 			else if (e.which == 'H'.charCodeAt(0)){
-				lightPosition[1] += 10;
+				lightPosition[2][1] += 10;
 			}
 			else if (e.which == 'N'.charCodeAt(0)){
-				lightPosition[1] -= 10;
+				lightPosition[2][1] -= 10;
 			}
 			else if (e.which == 'J'.charCodeAt(0)){
-				lightPosition[2] += 10;
+				lightPosition[2][2] += 10;
+				lightPosition[2][2] = Math.max(lightPosition[2][2],0);
 			}
 			else if (e.which == 'G'.charCodeAt(0)){
-				lightPosition[2] -= 10;
+				lightPosition[2][2] -= 10;
+				lightPosition[2][2] = Math.max(lightPosition[2][2],0);
 			}
 			else if (e.which == 'F'.charCodeAt(0)){
 				shadingMode = (shadingMode+1)%3;
