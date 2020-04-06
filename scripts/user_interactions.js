@@ -24,23 +24,23 @@ document.onkeydown = function(e) {
         cameraPosition = vecAdd(cameraPosition,normDir);
         target = vecAdd(target,normDir);
         orthoscale *= .99; 
-        moveSpotLight(scene.lights[4],0,0);
+        moveSpotLight(0,0);
     }
     else if (e.which == 'S'.charCodeAt(0)){ // Back
         cameraPosition = vecAdd(cameraPosition,multByScalar(normDir,-1));
         target = vecAdd(target,multByScalar(normDir,-1));
         orthoscale *= 1.01;
-        moveSpotLight(scene.lights[4],0,0);
+        moveSpotLight(0,0);
     }
     else if (e.which == 'A'.charCodeAt(0)){ // left
         var newDir = rotateY(normDir,-0.2);
         target = vecAdd(cameraPosition,newDir);
-        moveSpotLight(scene.lights[4],0,0);
+        moveSpotLight(0,0);
     }
     else if (e.which == 'D'.charCodeAt(0)){ // right
         var newDir = rotateY(normDir,0.2);
         target = vecAdd(cameraPosition,newDir);
-        moveSpotLight(scene.lights[4],0,0);
+        moveSpotLight(0,0);
     }
     else if (e.which == 'E'.charCodeAt(0)){ // up
         var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -49,7 +49,7 @@ document.onkeydown = function(e) {
         if(newDir[1]<0.8){
             target = vecAdd(cameraPosition,newDir);
         }
-        moveSpotLight(scene.lights[4],0,0);
+        moveSpotLight(0,0);
     }
     else if (e.which == 'Q'.charCodeAt(0)){ // down
         var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -58,7 +58,7 @@ document.onkeydown = function(e) {
         if(newDir[1]>-0.8){
             target = vecAdd(cameraPosition,newDir);
         }
-        moveSpotLight(scene.lights[4],0,0);
+        moveSpotLight(0,0);
     }
     else if (e.which == 'O'.charCodeAt(0)){
         console.log('Orthographic');
@@ -121,17 +121,17 @@ document.onkeydown = function(e) {
         }
     }
     else if(e.keyCode == 38){
-        scene.lights[4].spotlightInnerLimit = Math.max(0.4,scene.lights[4].spotlightInnerLimit-0.005)
-        scene.lights[4].spotlightOuterLimit = Math.max(0.2,scene.lights[4].spotlightOuterLimit-0.005)
+        scene.decreaseSpotlightInnerLimit();
+        scene.decreaseSpotlightOuterLimit();
     }
     else if(e.keyCode == 40){
-        scene.lights[4].spotlightInnerLimit = Math.min(0.999,scene.lights[4].spotlightInnerLimit+0.005)
-        scene.lights[4].spotlightOuterLimit = Math.min(0.95,scene.lights[4].spotlightOuterLimit+0.005)
+        scene.increaseSpotlightInnerLimit();
+        scene.increaseSpotlightOuterLimit();
     }
 };
 
 document.onmousemove = function( event ) {
-    moveSpotLight(scene.lights[4],(event.pageX/gl.canvas.clientWidth - 0.5)*3.14/4, (event.pageY/gl.canvas.clientHeight-0.5)*3.14/4);
+    moveSpotLight((event.pageX/gl.canvas.clientWidth - 0.5)*3.14/4, (event.pageY/gl.canvas.clientHeight-0.5)*3.14/4);
 };
 
 var updateLightProperties = function(){			
@@ -223,7 +223,7 @@ for (let index = 0; index < matrialPropertiesSliders.length; index++) {
     matrialPropertiesSliders[index].oninput = updateMaterialProperties;
 }
 
-var moveSpotLight = function (light, diffX, diffY) {
+var moveSpotLight = function (diffX, diffY) {
     var dir = [-cameraPosition[0]+target[0],
                     -cameraPosition[1]+target[1],
                     -cameraPosition[2]+target[2],
@@ -238,12 +238,6 @@ var moveSpotLight = function (light, diffX, diffY) {
     var newDirInCamerCoor = rotateY([newDirInCamerCoor[0],newDirInCamerCoor[1],newDirInCamerCoor[2]],diff[0]);
     var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
 
-    //console.log("CamerDir:",normDir);
-    //console.log("dirInCamerCoor:",dirInCamerCoor);
-    //console.log("diff:",diff);
-    //console.log("CamerDir:",newDir);
-    //console.log("===================================");
-
-    light.direction = [newDir[0],newDir[1],newDir[2]];
-    light.position = [cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0] ;
+    scene.changeSpotLightDirection([newDir[0],newDir[1],newDir[2]]);
+    scene.changeSpotLightPosition([cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0]);
 }

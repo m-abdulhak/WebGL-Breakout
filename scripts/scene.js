@@ -9,8 +9,9 @@ class Scene{
             "TopRight" : [4,4,0.8],
             "BottomLeft" : [1,1,0.8],
             "BottomRight" : [4,1,0.8]};
-        this.objects = [];
+        this.lights = [];
         this.createLights();
+        this.objects = [];
         this.createObjects();
     }
 
@@ -81,8 +82,33 @@ class Scene{
                 [1.0, 1.0, 1.0],
                 { specular:1.0, diffuse:0.5, ambient:0.05})
         ];
+        this.spotLight = this.lights[4];
     }
 
+    changeSpotLightDirection(direction){
+        this.spotLight.direction = direction;
+    }
+
+    changeSpotLightPosition(position){
+        this.spotLight.position = position;
+    }
+
+    decreaseSpotlightInnerLimit(){
+        this.spotLight.spotlightInnerLimit = Math.max(0.4,this.spotLight.spotlightInnerLimit-0.005);
+    }
+
+    decreaseSpotlightOuterLimit(){
+        this.spotLight.spotlightOuterLimit = Math.max(0.2,this.spotLight.spotlightOuterLimit-0.005);
+    }
+
+    increaseSpotlightInnerLimit(){
+        this.spotLight.spotlightInnerLimit = Math.min(0.999,this.spotLight.spotlightInnerLimit+0.005);
+    }
+
+    increaseSpotlightOuterLimit(){
+        this.spotLight.spotlightOuterLimit = Math.min(0.95,this.spotLight.spotlightOuterLimit+0.005);
+    }
+    
     render(time){
         var t = time /1000;
         for(const o of this.objects){
