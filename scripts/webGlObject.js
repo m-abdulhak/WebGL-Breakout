@@ -21,7 +21,8 @@ class WebGlObject {
                 hasShadow = true,
                 isLight = false,
                 lightIndex,
-                name) {
+                name,
+                scene) {
 
         this.gl = gl;
         this.programInfo = programInfo;
@@ -62,6 +63,9 @@ class WebGlObject {
         this.isLight = isLight;
         this.lightIndex = lightIndex;
 
+        // Parent scene
+        this.scene = scene;
+
         // print buffer info
         //console.log(this.bufferInfo);
         //console.log(this);
@@ -98,8 +102,8 @@ class WebGlObject {
     simulate(vector,changeRate,timeDelta){
         if(this.enabled){
             if(this.isLight) {
-                lights[this.lightIndex].position = this.position;
-                lights[this.lightIndex].position[3] = 1;
+                this.scene.lights[this.lightIndex].position = this.position;
+                this.scene.lights[this.lightIndex].position[3] = 1;
                 //console.log('islight:',this.isLight,this.position,lightPosition)
             }
             return vecAdd(vector,multByScalar(changeRate,timeDelta));
@@ -174,7 +178,7 @@ class WebGlObject {
 
         this.uniforms.u_shininess = this.materialShininess;
 
-        var flattenedLights = this.flattenLights(lights);
+        var flattenedLights = this.flattenLights(this.scene.lights);
 
         this.uniforms.u_shadow = 0.0;
         this.uniforms.u_spotlightInnerLimit = flattenedLights.spotlightInnerLimit;
@@ -203,24 +207,24 @@ class WebGlObject {
             this.gl.enable(this.gl.BLEND);
             this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_COLOR);
 
-            for (let index = 0; index < lights.length; index++) {
+            this.scene.lights.forEach((light, index) => {
                 // if light is very dim do not render its shadow
                 // reduce function returns the summ of RGB intensities
-                if(lights[index].color.reduce((a,b) => a + b, 0) < 0.1 || lights[index].position[2] < 0){
-                    continue;
+                if(light.color.reduce((a,b) => a + b, 0) < 0.1 || light.position[2] < 0){
+                    return;
                 }
 
                 // model-view matrix for shadow then render
-                var shadow_modelViewMatrix = lights[index].getShadowModelViewMatrix(2);
+                var shadow_modelViewMatrix = light.getShadowModelViewMatrix(2);
                 
                 this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
                 this.uniforms.u_shadow = 1.0;
                 this.uniforms.u_shadow_light_index = index;
                 
                 webglUtils.setUniforms(this.programInfo, this.uniforms);
-                this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);					
-            }
-            //this.gl.enable(this.gl.DEPTH_TEST);
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);				
+            });
+
             this.gl.disable(this.gl.BLEND);
         }
     }

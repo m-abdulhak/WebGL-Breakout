@@ -15,33 +15,6 @@ var orthoscale = 1;
 var viewTypes = {'Orthographic':0,'Perspective':1};
 var view = viewTypes['Perspective'];
 
-var lights = [
-    new Light([70, 70, 40, 1.0 ], 
-        [0.0, 0.0, 0.0], 
-        [1.0, 1.0, 1.0], 
-        { specular:1.0, diffuse:0.5, ambient:0.05}),
-
-    new Light([140, 140, 80, 1.0 ], 
-        [0.0, 0.0, 0.0], 
-        [.9, .2, .2], 
-        { specular:0.7, diffuse:0.3, ambient:0.05}),
-
-    new Light([70, 140, 80, 1.0 ],
-        [0.0, 0.0, 0.0],
-        [.2, .2, .9],
-        { specular:0.7, diffuse:0.3, ambient:0.05}),
-
-    new Light([0, 140, 80, 1.0 ],
-        [0.0, 0.0, 0.0],
-        [.2, .9, .2],
-        { specular:0.7, diffuse:0.3, ambient:0.05}),
-
-    new Light([70, 70, 220, 0.0 ],
-        [0., 0., -1.0],
-        [1.0, 1.0, 1.0],
-        { specular:1.0, diffuse:0.5, ambient:0.05})
-]
-
 var canvas = document.getElementById("canvas");
 var gl = canvas.getContext("webgl");
 
@@ -62,7 +35,6 @@ function main() {
 
     //objects = createObjects(gl,programInfo);
     scene = new Scene(gl,programInfo);
-    scene.createObjects();
 
     requestAnimationFrame(render);
 

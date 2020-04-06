@@ -24,23 +24,23 @@ document.onkeydown = function(e) {
         cameraPosition = vecAdd(cameraPosition,normDir);
         target = vecAdd(target,normDir);
         orthoscale *= .99; 
-        moveSpotLight(lights[4],0,0);
+        moveSpotLight(scene.lights[4],0,0);
     }
     else if (e.which == 'S'.charCodeAt(0)){ // Back
         cameraPosition = vecAdd(cameraPosition,multByScalar(normDir,-1));
         target = vecAdd(target,multByScalar(normDir,-1));
         orthoscale *= 1.01;
-        moveSpotLight(lights[4],0,0);
+        moveSpotLight(scene.lights[4],0,0);
     }
     else if (e.which == 'A'.charCodeAt(0)){ // left
         var newDir = rotateY(normDir,-0.2);
         target = vecAdd(cameraPosition,newDir);
-        moveSpotLight(lights[4],0,0);
+        moveSpotLight(scene.lights[4],0,0);
     }
     else if (e.which == 'D'.charCodeAt(0)){ // right
         var newDir = rotateY(normDir,0.2);
         target = vecAdd(cameraPosition,newDir);
-        moveSpotLight(lights[4],0,0);
+        moveSpotLight(scene.lights[4],0,0);
     }
     else if (e.which == 'E'.charCodeAt(0)){ // up
         var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -49,7 +49,7 @@ document.onkeydown = function(e) {
         if(newDir[1]<0.8){
             target = vecAdd(cameraPosition,newDir);
         }
-        moveSpotLight(lights[4],0,0);
+        moveSpotLight(scene.lights[4],0,0);
     }
     else if (e.which == 'Q'.charCodeAt(0)){ // down
         var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
@@ -58,7 +58,7 @@ document.onkeydown = function(e) {
         if(newDir[1]>-0.8){
             target = vecAdd(cameraPosition,newDir);
         }
-        moveSpotLight(lights[4],0,0);
+        moveSpotLight(scene.lights[4],0,0);
     }
     else if (e.which == 'O'.charCodeAt(0)){
         console.log('Orthographic');
@@ -73,24 +73,24 @@ document.onkeydown = function(e) {
         document.getElementById("sidebar").style.display = dis != "none" ? "none":"block";
     }
     else if (e.which == 'M'.charCodeAt(0)){
-        lights[2].position[0] += 10;
+        scene.lights[2].position[0] += 10;
     }
     else if (e.which == 'B'.charCodeAt(0)){
-        lights[2].position[0] -= 10;
+        scene.lights[2].position[0] -= 10;
     }
     else if (e.which == 'H'.charCodeAt(0)){
-        lights[2].position[1] += 10;
+        scene.lights[2].position[1] += 10;
     }
     else if (e.which == 'N'.charCodeAt(0)){
-        lights[2].position[1] -= 10;
+        scene.lights[2].position[1] -= 10;
     }
     else if (e.which == 'J'.charCodeAt(0)){
-        lights[2].position[2] += 10;
-        lights[2].position[2] = Math.max(lights[2].position[2],0);
+        scene.lights[2].position[2] += 10;
+        scene.lights[2].position[2] = Math.max(scene.lights[2].position[2],0);
     }
     else if (e.which == 'G'.charCodeAt(0)){
-        lights[2].position[2] -= 10;
-        lights[2].position[2] = Math.max(lights[2].position[2],0);
+        scene.lights[2].position[2] -= 10;
+        scene.lights[2].position[2] = Math.max(scene.lights[2].position[2],0);
     }
     else if (e.which == 'F'.charCodeAt(0)){
         shadingMode = (shadingMode+1)%3;
@@ -121,17 +121,17 @@ document.onkeydown = function(e) {
         }
     }
     else if(e.keyCode == 38){
-        lights[4].spotlightInnerLimit = Math.max(0.4,lights[4].spotlightInnerLimit-0.005)
-        lights[4].spotlightOuterLimit = Math.max(0.2,lights[4].spotlightOuterLimit-0.005)
+        scene.lights[4].spotlightInnerLimit = Math.max(0.4,scene.lights[4].spotlightInnerLimit-0.005)
+        scene.lights[4].spotlightOuterLimit = Math.max(0.2,scene.lights[4].spotlightOuterLimit-0.005)
     }
     else if(e.keyCode == 40){
-        lights[4].spotlightInnerLimit = Math.min(0.999,lights[4].spotlightInnerLimit+0.005)
-        lights[4].spotlightOuterLimit = Math.min(0.95,lights[4].spotlightOuterLimit+0.005)
+        scene.lights[4].spotlightInnerLimit = Math.min(0.999,scene.lights[4].spotlightInnerLimit+0.005)
+        scene.lights[4].spotlightOuterLimit = Math.min(0.95,scene.lights[4].spotlightOuterLimit+0.005)
     }
 };
 
 document.onmousemove = function( event ) {
-    moveSpotLight(lights[4],(event.pageX/gl.canvas.clientWidth - 0.5)*3.14/4, (event.pageY/gl.canvas.clientHeight-0.5)*3.14/4);
+    moveSpotLight(scene.lights[4],(event.pageX/gl.canvas.clientWidth - 0.5)*3.14/4, (event.pageY/gl.canvas.clientHeight-0.5)*3.14/4);
 };
 
 var updateLightProperties = function(){			
@@ -145,18 +145,18 @@ var updateLightProperties = function(){
                             document.getElementById("green-intensity-slider").value, 
                             document.getElementById("blue-intensity-slider").value];
     
-    lights[lightIndex].changeProperties(newLightProperties);
-    lights[lightIndex].changeLight(newLightColor);
+    scene.lights[lightIndex].changeProperties(newLightProperties);
+    scene.lights[lightIndex].changeLight(newLightColor);
 }
 
 var updateLightPropertiesSliders = function(lightIndex){
     document.getElementById("selected-light-label").textContent = document.getElementsByClassName("light-intensity-title")[lightIndex].textContent;
-    document.getElementById("specular-intensity-slider").value = lights[lightIndex].properties[0];
-    document.getElementById("diffuse-intensity-slider").value = lights[lightIndex].properties[1];
-    document.getElementById("ambient-intensity-slider").value = lights[lightIndex].properties[2];
-    document.getElementById("red-intensity-slider").value = lights[lightIndex].color[0];
-    document.getElementById("green-intensity-slider").value = lights[lightIndex].color[1];
-    document.getElementById("blue-intensity-slider").value = lights[lightIndex].color[2];
+    document.getElementById("specular-intensity-slider").value = scene.lights[lightIndex].properties[0];
+    document.getElementById("diffuse-intensity-slider").value = scene.lights[lightIndex].properties[1];
+    document.getElementById("ambient-intensity-slider").value = scene.lights[lightIndex].properties[2];
+    document.getElementById("red-intensity-slider").value = scene.lights[lightIndex].color[0];
+    document.getElementById("green-intensity-slider").value = scene.lights[lightIndex].color[1];
+    document.getElementById("blue-intensity-slider").value = scene.lights[lightIndex].color[2];
 }
 
 var selectedLightChanged = function() {
@@ -166,7 +166,7 @@ var selectedLightChanged = function() {
 
 var lightIntensitySlidersChanged = function() {
     for (let index = 0; index < lightIntensitySliders.length; index++) {
-        lights[index].changeColorIntensity(lightIntensitySliders[index].value);				
+        scene.lights[index].changeColorIntensity(lightIntensitySliders[index].value);				
     }
     selectedLightChanged();
 }

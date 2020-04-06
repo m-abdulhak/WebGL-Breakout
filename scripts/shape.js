@@ -77,7 +77,7 @@ class ShapeFactory {
         return settings;
     }
     
-    createShape = function(shape, location, color, parameters) {
+    createShape = function(shape, location, color, parameters, scene) {
         // print shpae info
         //console.log(shape);
         const settings = parameters == null? copyOf(this.DefShapeSettings) : copyOf(parameters);
@@ -104,6 +104,7 @@ class ShapeFactory {
             settings.hasShadow,
             settings.isLight,		
             settings.lightIndex,
-            settings.name);
+            settings.name,
+            scene);
     }
 }
