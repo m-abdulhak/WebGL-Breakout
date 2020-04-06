@@ -105,7 +105,6 @@ var setViewOrtho = function (gl) {
     var A = target_width / target_height; // target aspect ratio 
     var V = gl.canvas.clientWidth / gl.canvas.clientHeight;
 
-
     var mat = [];
 
     // calculate V as above
