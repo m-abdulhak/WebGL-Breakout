@@ -14,47 +14,33 @@ var orthoscale = 1;
 
 var viewTypes = {'Orthographic':0,'Perspective':1};
 var view = viewTypes['Perspective'];
-    
-// My Lighting 
-// Lighting
-// vec4
-// TODO: Refactor into class
-var lightPosition = [	[70, 70, 40, 1.0 ], 
-                        [140, 140, 80, 1.0 ], 
-                        [70, 140, 80, 1.0 ], 
-                        [0, 140, 80, 1.0 ], 
-                        [70, 70, 220, 0.0 ]];
 
-var lightDirection = [	[0.0, 0.0, 0.0], 
-                        [0.0, 0.0, 0.0], 
-                        [0.0, 0.0, 0.0], 
-                        [0.0, 0.0, 0.0], 
-                        [0., 0., -1.0]];
+var lights = [
+    new Light([70, 70, 40, 1.0 ], 
+        [0.0, 0.0, 0.0], 
+        [1.0, 1.0, 1.0], 
+        { specular:1.0, diffuse:0.5, ambient:0.05}),
 
-var lightColorBase = [	[1.0, 1.0, 1.0], 
-                        [.9, .2, .2], 
-                        [.2, .2, .9], 
-                        [.2, .9, .2], 
-                        [1.0, 1.0, 1.0]];
+    new Light([140, 140, 80, 1.0 ], 
+        [0.0, 0.0, 0.0], 
+        [.9, .2, .2], 
+        { specular:0.7, diffuse:0.3, ambient:0.05}),
 
-var lightColor = [...lightColorBase];
+    new Light([70, 140, 80, 1.0 ],
+        [0.0, 0.0, 0.0],
+        [.2, .2, .9],
+        { specular:0.7, diffuse:0.3, ambient:0.05}),
 
-// Specular, Diffuse, Ambient Intensities
-var lightProperties = [	[1.0, 0.5, 0.05], 
-                        [0.7, 0.3, 0.05], 
-                        [0.7, 0.3, 0.05], 
-                        [0.7, 0.3, 0.05], 
-                        [1.0, 0.5, 0.05]];
+    new Light([0, 140, 80, 1.0 ],
+        [0.0, 0.0, 0.0],
+        [.2, .9, .2],
+        { specular:0.7, diffuse:0.3, ambient:0.05}),
 
-var lightSpecular = [multByScalar(lightColor[0], lightProperties[0][0]), multByScalar(lightColor[1], lightProperties[1][0]), multByScalar(lightColor[2], lightProperties[2][0]), multByScalar(lightColor[3], lightProperties[3][0]), multByScalar(lightColor[4], lightProperties[4][0])];
-var lightDiffuse = [multByScalar(lightColor[0], lightProperties[0][1]), multByScalar(lightColor[1], lightProperties[1][1]), multByScalar(lightColor[2], lightProperties[2][1]), multByScalar(lightColor[3], lightProperties[3][1]), multByScalar(lightColor[4], lightProperties[4][1])];
-var lightAmbient = [multByScalar(lightColor[0], lightProperties[0][2]), multByScalar(lightColor[1], lightProperties[1][2]), multByScalar(lightColor[2],lightProperties[2][2]), multByScalar(lightColor[3], lightProperties[3][2]), multByScalar(lightColor[4], lightProperties[4][2])];
-
-var spotlightOuterLimit = 0.8;
-var spotlightInnerLimit = 0.9;
-
-// Shadows
-var xyPlaneShadowsTransformationMatrix = [];
+    new Light([70, 70, 220, 0.0 ],
+        [0., 0., -1.0],
+        [1.0, 1.0, 1.0],
+        { specular:1.0, diffuse:0.5, ambient:0.05})
+]
 
 var canvas = document.getElementById("canvas");
 var gl = canvas.getContext("webgl");
@@ -166,31 +152,6 @@ var setViewPerspective = function (gl) {
     var fieldOfViewRadians = degToRad(60);
     var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     return m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
-}
-
-var moveSpotLight = function (diffX, diffY) {
-    var dir = [-cameraPosition[0]+target[0],
-                    -cameraPosition[1]+target[1],
-                    -cameraPosition[2]+target[2],
-                    0];
-
-    var normDir = normalize(dir);
-
-    var diff = [diffX,diffY];
-    var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
-
-    var newDirInCamerCoor = rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],diff[1]);
-    var newDirInCamerCoor = rotateY([newDirInCamerCoor[0],newDirInCamerCoor[1],newDirInCamerCoor[2]],diff[0]);
-    var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
-
-    //console.log("CamerDir:",normDir);
-    //console.log("dirInCamerCoor:",dirInCamerCoor);
-    //console.log("diff:",diff);
-    //console.log("CamerDir:",newDir);
-    //console.log("===================================");
-
-    lightDirection[4] = [newDir[0],newDir[1],newDir[2]];
-    lightPosition[4] = [cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0] ;
 }
 
 window.onload = main();

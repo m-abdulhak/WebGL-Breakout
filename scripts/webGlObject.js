@@ -98,8 +98,8 @@ class WebGlObject {
     simulate(vector,changeRate,timeDelta){
         if(this.enabled){
             if(this.isLight) {
-                lightPosition[this.lightIndex] = this.position;
-                lightPosition[this.lightIndex][3] = 1;
+                lights[this.lightIndex].position = this.position;
+                lights[this.lightIndex].position[3] = 1;
                 //console.log('islight:',this.isLight,this.position,lightPosition)
             }
             return vecAdd(vector,multByScalar(changeRate,timeDelta));
@@ -172,33 +172,25 @@ class WebGlObject {
         this.uniforms.u_projectionMatrix = projectionMatrix;
         this.uniforms.u_viewWorldPosition = cameraPosition;
 
-        var ambientProduct = [];
-        var diffuseProduct = [];
-        var specularProduct = [];
-
-        // Update my lighting parameters
-        for (let index = 0; index < lightAmbient.length; index++) {
-            ambientProduct[index] = mult(lightAmbient[index], this.materialAmbient);
-            diffuseProduct[index] = mult(lightDiffuse[index], this.materialDiffuse);
-            specularProduct[index] = mult(lightSpecular[index], this.materialSpecular);
-        }
-                
         this.uniforms.u_shininess = this.materialShininess;
 
+        var flattenedLights = this.flattenLights(lights);
+
         this.uniforms.u_shadow = 0.0;
-        this.uniforms.u_spotlightInnerLimit = spotlightInnerLimit;
-        this.uniforms.u_spotlightOuterLimit = spotlightOuterLimit;
+        this.uniforms.u_spotlightInnerLimit = flattenedLights.spotlightInnerLimit;
+        this.uniforms.u_spotlightOuterLimit = flattenedLights.spotlightOuterLimit;
+
 
         var lightPositionsLocation = this.gl.getUniformLocation(this.programInfo.program, "u_lightPositions");
-        this.gl.uniform4fv(lightPositionsLocation,flatten(lightPosition));
+        this.gl.uniform4fv(lightPositionsLocation,flattenedLights.lightPosition);
         var lightDirectionLocation = this.gl.getUniformLocation(this.programInfo.program, "u_lightDirections");
-        this.gl.uniform3fv(lightDirectionLocation,flatten(lightDirection));
+        this.gl.uniform3fv(lightDirectionLocation,flattenedLights.lightDirection);
         var ambientProductLocation = this.gl.getUniformLocation(this.programInfo.program, "u_ambientColors");
-        this.gl.uniform3fv(ambientProductLocation,flatten(ambientProduct));
+        this.gl.uniform3fv(ambientProductLocation,flattenedLights.ambientProduct);
         var diffuseProductLocation = this.gl.getUniformLocation(this.programInfo.program, "u_diffuseColors");
-        this.gl.uniform3fv(diffuseProductLocation,flatten(diffuseProduct));
+        this.gl.uniform3fv(diffuseProductLocation,flattenedLights.diffuseProduct);
         var specularProductLocation = this.gl.getUniformLocation(this.programInfo.program, "u_specularColors");
-        this.gl.uniform3fv(specularProductLocation,flatten(specularProduct));
+        this.gl.uniform3fv(specularProductLocation,flattenedLights.specularProduct);
 
         // Set the uniforms we just computed
         webglUtils.setUniforms(this.programInfo, this.uniforms);
@@ -211,31 +203,15 @@ class WebGlObject {
             this.gl.enable(this.gl.BLEND);
             this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_COLOR);
 
-            for (let index = 0; index < lightPosition.length; index++) {
+            for (let index = 0; index < lights.length; index++) {
                 // if light is very dim do not render its shadow
                 // reduce function returns the summ of RGB intensities
-                if(lightColor[index].reduce((a,b) => a + b, 0) < 0.1 || lightPosition[index][2] < 0)
+                if(lights[index].color.reduce((a,b) => a + b, 0) < 0.1 || lights[index].position[2] < 0){
                     continue;
+                }
 
                 // model-view matrix for shadow then render
-                var black = vec4(0.0, 0.0, 0.0, 1.0);
-                var lightSource = lightPosition[index];
-                var para1 = translate(lightSource[0], lightSource[1], lightSource[2]);
-                var src = viewMatrix;
-                para1[0] = [src[0],src[4],src[8],src[12]];
-                para1[1] = [src[1],src[5],src[9],src[13]];
-                para1[2] = [src[2],src[6],src[10],src[14]];
-                para1[3] = [src[3],src[7],src[11],src[15]];
-                var para2 = translate(lightSource[0], lightSource[1], lightSource[2]);
-                var shadow_modelViewMatrix = mult(para1, para2);
-
-                xyPlaneShadowsTransformationMatrix[index] = mat4();
-                xyPlaneShadowsTransformationMatrix[index][3][3] = 0;
-                xyPlaneShadowsTransformationMatrix[index][3][2] = -1/lightPosition[index][2];
-
-                //console.log("modelViewMatrix:",para1,"translate:",para2,"modelViewMatrix",shadow_modelViewMatrix)
-                shadow_modelViewMatrix = mult(shadow_modelViewMatrix, xyPlaneShadowsTransformationMatrix[index]);
-                shadow_modelViewMatrix = mult(shadow_modelViewMatrix, translate(-lightSource[0], -lightSource[1],-lightSource[2]));
+                var shadow_modelViewMatrix = lights[index].getShadowModelViewMatrix(2);
                 
                 this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
                 this.uniforms.u_shadow = 1.0;
@@ -274,4 +250,38 @@ class WebGlObject {
     toggleAnimation(){
         this.enabled = !this.enabled;
     }
+        
+    flattenLights(lights){
+
+        var flattenedLights = {};
+
+        // TODO: load spotlight from scene
+        flattenedLights.spotlightInnerLimit =  lights[4].spotlightInnerLimit;
+        flattenedLights.spotlightOuterLimit =  lights[4].spotlightOuterLimit;
+
+        var ambientProduct = [];
+        var diffuseProduct = [];
+        var specularProduct = [];
+        var lightPosition = [];
+        var lightDirection = [];
+
+        // Update my lighting parameters
+        // TODO: load number of lights from scene
+        for (let index = 0; index < lights.length; index++) {
+            ambientProduct[index] = mult(lights[index].ambient, this.materialAmbient);
+            diffuseProduct[index] = mult(lights[index].diffuse, this.materialDiffuse);
+            specularProduct[index] = mult(lights[index].specular, this.materialSpecular);
+            lightPosition[index] = lights[index].position;
+            lightDirection[index] = lights[index].direction;
+        }
+
+        flattenedLights.lightPosition = flatten(lightPosition);
+        flattenedLights.lightDirection = flatten(lightDirection);
+        flattenedLights.ambientProduct = flatten(ambientProduct);
+        flattenedLights.diffuseProduct = flatten(diffuseProduct);
+        flattenedLights.specularProduct = flatten(specularProduct);
+
+        return flattenedLights;
+    }
+
 }
