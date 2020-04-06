@@ -22,7 +22,8 @@ class WebGlObject {
                 isLight = false,
                 lightIndex,
                 name,
-                scene) {
+                scene,
+                textureObject = null) {
 
         this.gl = gl;
         this.programInfo = programInfo;
@@ -66,6 +67,9 @@ class WebGlObject {
         // Parent scene
         this.scene = scene;
 
+        // Texture
+        this.textureObject = textureObject;
+        
         // print buffer info
         //console.log(this.bufferInfo);
         //console.log(this);
@@ -156,6 +160,33 @@ class WebGlObject {
 
         this.gl.useProgram(this.programInfo.program);
 
+        this.setupObjectBufferAndUniforms();
+        this.loadTexture();
+
+        this.gl.depthMask(true);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+        this.gl.depthMask(false);
+
+        if(this.hasShadow && shadingMode<2){
+            this.gl.enable(this.gl.BLEND);
+            this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_COLOR);
+
+            this.scene.lights.forEach(light => {
+                // if light is very dim do not render its shadow
+                // reduce function returns the summ of RGB intensities
+                if(light.color.reduce((a,b) => a + b, 0) < 0.1 || light.position[2] < 0){
+                    return;
+                }
+        
+                this.setupShadowsBufferAndUniformsForLight(light);
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);				
+            });
+
+            this.gl.disable(this.gl.BLEND);
+        }
+    }
+
+    setupObjectBufferAndUniforms(){     
         // Setup all the needed attributes.
         webglUtils.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo);
 
@@ -184,7 +215,6 @@ class WebGlObject {
         this.uniforms.u_spotlightInnerLimit = flattenedLights.spotlightInnerLimit;
         this.uniforms.u_spotlightOuterLimit = flattenedLights.spotlightOuterLimit;
 
-
         var lightPositionsLocation = this.gl.getUniformLocation(this.programInfo.program, "u_lightPositions");
         this.gl.uniform4fv(lightPositionsLocation,flattenedLights.lightPosition);
         var lightDirectionLocation = this.gl.getUniformLocation(this.programInfo.program, "u_lightDirections");
@@ -198,35 +228,16 @@ class WebGlObject {
 
         // Set the uniforms we just computed
         webglUtils.setUniforms(this.programInfo, this.uniforms);
+    }
 
-        this.gl.depthMask(true);
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
-        this.gl.depthMask(false);
-
-        if(this.hasShadow && shadingMode<2){
-            this.gl.enable(this.gl.BLEND);
-            this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_COLOR);
-
-            this.scene.lights.forEach((light, index) => {
-                // if light is very dim do not render its shadow
-                // reduce function returns the summ of RGB intensities
-                if(light.color.reduce((a,b) => a + b, 0) < 0.1 || light.position[2] < 0){
-                    return;
-                }
-
-                // model-view matrix for shadow then render
-                var shadow_modelViewMatrix = light.getShadowModelViewMatrix(2);
-                
-                this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
-                this.uniforms.u_shadow = 1.0;
-                this.uniforms.u_shadow_light_index = index;
-                
-                webglUtils.setUniforms(this.programInfo, this.uniforms);
-                this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);				
-            });
-
-            this.gl.disable(this.gl.BLEND);
-        }
+    setupShadowsBufferAndUniformsForLight(light){
+        // model-view matrix for shadow then render
+        var shadow_modelViewMatrix = light.getShadowModelViewMatrix(2);
+        
+        this.uniforms.u_modelViewMatrix = flatten(shadow_modelViewMatrix);
+        this.uniforms.u_shadow = 1.0;
+        
+        webglUtils.setUniforms(this.programInfo, this.uniforms);
     }
 
     computeMatrix( translation, rotation, scale){
@@ -286,6 +297,18 @@ class WebGlObject {
         flattenedLights.specularProduct = flatten(specularProduct);
 
         return flattenedLights;
+    }
+
+    loadTexture(){
+        // Make the "texture unit" 0 be the active texture unit.
+        gl.activeTexture(gl.TEXTURE0);
+
+        // Make the texture_object be the active texture. This binds the
+        // texture_object to "texture unit" 0.
+        gl.bindTexture(gl.TEXTURE_2D, this.textureObject);
+
+        // Tell the shader program to use "texture unit" 0
+        gl.uniform1i(this.programInfo.program.u_texture, 0);
     }
 
 }

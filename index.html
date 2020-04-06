@@ -66,7 +66,7 @@
 		<span class="light-intensity-title">Diffuse:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="diffuse-intensity-slider">
 		<br>
 		<br>
-		<span class="light-intensity-title">Ambient:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="ambient-intensity-slider">
+		<span class="light-intensity-title">Ambient:</span><input type="range" min="0.0" max=".5" value="" step="0.1" class="slider lightPropertiesSlider" id="ambient-intensity-slider">
 		<br>
 		<br>
 		<span class="light-intensity-title">Red:</span><input type="range" min="0.0" max="2.0" value="" step="0.1" class="slider lightPropertiesSlider" id="red-intensity-slider">
@@ -123,6 +123,7 @@ varying vec3 vertex_view_space;
 attribute vec4 a_position;
 attribute vec4 a_normal;
 attribute vec4 a_color;
+attribute vec2 a_texcoord;
 
 uniform mat4 u_matrix;
 uniform mat4 u_modelViewMatrix;
@@ -136,6 +137,8 @@ varying vec3 v_normal;
 varying vec3 v_surfaceToLight[5];
 varying vec3 v_surfaceToView;
 varying vec4 v_face_color;
+
+varying vec2 v_texcoord;
 
 void main() {
 	// For flat shading
@@ -165,6 +168,9 @@ void main() {
 
 	// Pass face color to the fragment shader for simple shading
 	v_face_color = a_color;
+	
+	// Pass the texcoord to the fragment shader
+	v_texcoord = a_texcoord;
 }
 </script>
 
@@ -180,7 +186,6 @@ varying vec3 vertex_view_space;
 uniform vec4 u_surfaceColor;
 uniform float u_shininess;
 uniform float u_shadow;
-uniform int u_shadow_light_index;
 uniform float u_spotlightInnerLimit;
 uniform float u_spotlightOuterLimit;
 uniform int u_shading_mode;
@@ -197,6 +202,10 @@ varying vec3 v_normal;
 varying vec3 v_surfaceToLight[5];
 varying vec3 v_surfaceToView;
 varying vec4 v_face_color;
+varying vec2 v_texcoord;
+ 
+// The texture.
+uniform sampler2D u_texture;
 
 void main() {
 	// because v_normal is a varying it's interpolated
@@ -209,8 +218,12 @@ void main() {
 		vec3 V = dFdy(vertex_view_space);                 
 		surfaceNormal = normalize(cross(U,V));
 	}
+	
+	// For flat shading
+	//gl_FragColor = u_surfaceColor;
 
-	gl_FragColor = u_surfaceColor;
+	// For textures
+	gl_FragColor = texture2D(u_texture, v_texcoord);;
 
 	if(u_shading_mode < 2){
 		vec3 diffusedLights = vec3(0.0, 0.0, 0.0);
@@ -248,12 +261,6 @@ void main() {
 
 			// Add ambientColor
 			ambientLights.rgb += u_ambientColors[i] * coef;
-			
-			// TODO: remove ambient light of current light under its shadow
-			// this does not work, causes flickering if overlaping with other shadows
-			//if(u_shadow==1.0  && u_shadow_light_index == i){
-				//ambientLights.rgb -= u_ambientColors[i];
-			//}
 		}
 		
 		gl_FragColor.rgb *= diffusedLights ;

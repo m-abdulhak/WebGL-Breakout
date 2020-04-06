@@ -1,3 +1,4 @@
+
 // Light options elements
 var lightIntensitySliders = document.getElementsByClassName("lightIntensitySlider");
 var lightSelectionSlider = document.getElementById("light-selection-slider");
@@ -146,14 +147,14 @@ var updateLightProperties = function(){
                             document.getElementById("blue-intensity-slider").value];
     
     scene.lights[lightIndex].changeProperties(newLightProperties);
-    scene.lights[lightIndex].changeLight(newLightColor);
+    scene.lights[lightIndex].changeColor(newLightColor);
 }
 
 var updateLightPropertiesSliders = function(lightIndex){
     document.getElementById("selected-light-label").textContent = document.getElementsByClassName("light-intensity-title")[lightIndex].textContent;
-    document.getElementById("specular-intensity-slider").value = scene.lights[lightIndex].properties[0];
-    document.getElementById("diffuse-intensity-slider").value = scene.lights[lightIndex].properties[1];
-    document.getElementById("ambient-intensity-slider").value = scene.lights[lightIndex].properties[2];
+    document.getElementById("specular-intensity-slider").value = scene.lights[lightIndex].properties.specular;
+    document.getElementById("diffuse-intensity-slider").value = scene.lights[lightIndex].properties.diffuse;
+    document.getElementById("ambient-intensity-slider").value = scene.lights[lightIndex].properties.ambient;
     document.getElementById("red-intensity-slider").value = scene.lights[lightIndex].color[0];
     document.getElementById("green-intensity-slider").value = scene.lights[lightIndex].color[1];
     document.getElementById("blue-intensity-slider").value = scene.lights[lightIndex].color[2];

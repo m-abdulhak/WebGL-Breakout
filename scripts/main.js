@@ -29,18 +29,22 @@ function main() {
     console.log(gl.getParameter(gl.VERSION));
     console.log(gl.getParameter(gl.SHADING_LANGUAGE_VERSION));
     console.log(gl.getParameter(gl.VENDOR));
+    console.log(gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS));
+    console.log(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
+    
 
     // setup GLSL program
     var programInfo = webglUtils.createProgramInfo(gl, ["3d-vertex-shader", "3d-fragment-shader"]);
 
-    //objects = createObjects(gl,programInfo);
-    scene = new Scene(gl,programInfo);
+    linkTextures();
 
-    requestAnimationFrame(render);
-
+    scene = new Scene(gl, programInfo, textureObjects);
+    
     selectedLightChanged();		
     lightIntensitySlidersChanged();
     selectedShapeChanged();
+
+    requestAnimationFrame(render);
 
     // Draw the scene.
     function render(time) {
@@ -125,4 +129,69 @@ var setViewPerspective = function (gl) {
     return m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 }
 
-window.onload = main();
+var textureUrls = [
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/1k/TexturesCom_Paint_Chipped_1K_albedo.png",
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/1k/TexturesCom_Scifi_Panel_1K_height.png",
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_Craft_01_ambientocclusion.jpg",
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_denim_01_basecolor.jpg",
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_laces_01_basecolor.jpg",
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_valvet_01_basecolor.jpg"];
+var textureImages = [];
+var textureObjects = [];
+
+var loadTextures = function(){
+    textureUrls.forEach(textureUrl => {
+        var textureImage = new Image();
+        textureImage.crossOrigin = "";
+        requestCORSIfNotSameOrigin(textureImage, textureUrl);
+        textureImage.src = textureUrl;
+        textureImages.push(textureImage);
+        
+        textureImage.addEventListener('load', function() {
+            if(textureImages.length == textureUrls.length){
+                var texturesDowloaded = true;
+                textureImages.forEach(image => {
+                    if(!image.complete){
+                        texturesDowloaded = false;
+                    }
+                });
+                if(texturesDowloaded){
+                    main();
+                }
+            }
+        });        
+    });
+}
+
+var linkTextures = function(){
+    textureImages.forEach(textureImage => {
+        // Create a texture.
+        var texture = gl.createTexture();
+
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // Fill the texture with a 1x1 black pixel.
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                    new Uint8Array([0, 0, 0, 255]));
+        
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, textureImage);
+        
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        textureObjects.push(texture);
+    });
+}
+
+// This is needed if the images are not on the same domain
+// NOTE: The server providing the images must give CORS permissions
+// in order to be able to use the image with WebGL. Most sites
+// do NOT give permission.
+// See: http://webglfundamentals.org/webgl/lessons/webgl-cors-permission.html
+function requestCORSIfNotSameOrigin(img, url) {
+    if ((new URL(url)).origin !== window.location.origin) {
+      img.crossOrigin = "";
+    }
+  }
+
+window.onload = loadTextures();

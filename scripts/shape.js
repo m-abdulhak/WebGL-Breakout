@@ -27,9 +27,9 @@ class ShapeFactory {
         "Plane" : primitives.createCubeVertices(20),
         "Sphere" : primitives.createSphereVertices(10, 60, 60),
         "Cube" : primitives.createCubeVertices(20),
-        "Pyramid" : primitives.createTruncatedConeVertices(10, 0, 20, 30, 10, true, true),
-        "Cylinder" : primitives.createTruncatedConeVertices(10, 10, 20, 60, 1, true, true),
-        "Cone" : primitives.createTruncatedConeVertices(10, 0, 20, 60, 1, true, true)};
+        "Pyramid" : primitives.createTruncatedConeVertices(10, 0, 20, 120, 60, true, true),
+        "Cylinder" : primitives.createTruncatedConeVertices(10, 10, 20, 120, 60, true, true),
+        "Cone" : primitives.createTruncatedConeVertices(10, 0, 20, 120, 60, true, true)};
     this.Colors = {
         "Red" : [1, 0.1, 0.1, 1],
         "Green" : [0.1, 1, 0.1, 1],
@@ -77,7 +77,7 @@ class ShapeFactory {
         return settings;
     }
     
-    createShape = function(shape, location, color, parameters, scene) {
+    createShape = function(shape, location, color, parameters, scene, textureURL) {
         // print shpae info
         //console.log(shape);
         const settings = parameters == null? copyOf(this.DefShapeSettings) : copyOf(parameters);
@@ -105,6 +105,7 @@ class ShapeFactory {
             settings.isLight,		
             settings.lightIndex,
             settings.name,
-            scene);
+            scene,
+            textureURL);
     }
 }
