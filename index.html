@@ -131,10 +131,10 @@ uniform mat4 u_projectionMatrix;
 
 uniform vec3 u_viewWorldPosition;
 
-uniform vec4 u_lightPositions[10];
+uniform vec4 u_lightPositions[12];
 
 varying vec3 v_normal;
-varying vec3 v_surfaceToLight[10];
+varying vec3 v_surfaceToLight[12];
 varying vec3 v_surfaceToView;
 varying vec4 v_face_color;
 
@@ -155,7 +155,7 @@ void main() {
 
 	// compute the vector of the surface to the light
 	// and pass it to the fragment shader	
-	for(int i = 0; i < 10; i++) {
+	for(int i = 0; i < 12; i++) {
 		v_surfaceToLight[i] = u_lightPositions[i].xyz - surfaceWorldPosition;
 	}
 
@@ -190,22 +190,23 @@ uniform float u_spotlightInnerLimit;
 uniform float u_spotlightOuterLimit;
 uniform int u_shading_mode;
 
-uniform highp vec4 u_lightPositions[10];
-uniform highp vec3 u_lightDirections[10];
+uniform highp vec4 u_lightPositions[12];
+uniform highp vec3 u_lightDirections[12];
 
-uniform vec3 u_ambientColors[10];
-uniform vec3 u_diffuseColors[10];
-uniform vec3 u_specularColors[10];
+uniform vec3 u_ambientColors[12];
+uniform vec3 u_diffuseColors[12];
+uniform vec3 u_specularColors[12];
 
 // Passed in from the vertex shader.
 varying vec3 v_normal;
-varying vec3 v_surfaceToLight[10];
+varying vec3 v_surfaceToLight[12];
 varying vec3 v_surfaceToView;
 varying vec4 v_face_color;
 varying vec2 v_texcoord;
  
 // The texture.
 uniform sampler2D u_texture;
+uniform int u_hasTexture;
 
 void main() {
 	// because v_normal is a varying it's interpolated
@@ -219,18 +220,21 @@ void main() {
 		surfaceNormal = normalize(cross(U,V));
 	}
 	
-	// For flat shading
-	//gl_FragColor = u_surfaceColor;
+	if(u_hasTexture==1){
+		// For textures
+		gl_FragColor = texture2D(u_texture, v_texcoord);
+	} else{
+		// For flat shading
+		gl_FragColor = u_surfaceColor;
+	}
 
-	// For textures
-	gl_FragColor = texture2D(u_texture, v_texcoord);;
 
 	if(u_shading_mode < 2){
 		vec3 diffusedLights = vec3(0.0, 0.0, 0.0);
 		vec3 specularLights = vec3(0.0, 0.0, 0.0);
 		vec3 ambientLights = vec3(0.0, 0.0, 0.0);
 
-		for(int i = 0; i < 10; i++) {
+		for(int i = 0; i < 12; i++) {
 			vec3 surfaceToLightDirection = normalize(v_surfaceToLight[i]);
 			vec3 surfaceToViewDirection = normalize(v_surfaceToView);
 			vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);

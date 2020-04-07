@@ -6,7 +6,7 @@ var shadingMode = 0;
 
 var cameraPosition = [0, 30, 900];
 var target = [cameraPosition[0], cameraPosition[1], cameraPosition[2]-1];
-var up = [0, 100, 0];
+var up = [0, 10, 0];
 var cameraMatrix = [];
 var viewMatrix = [];
 var projectionMatrix = [];

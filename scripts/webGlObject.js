@@ -23,7 +23,8 @@ class WebGlObject {
                 lightIndex,
                 name,
                 scene,
-                textureObject = null) {
+                textureObject = null,
+                hasTexture = true) {
 
         this.gl = gl;
         this.programInfo = programInfo;
@@ -69,6 +70,7 @@ class WebGlObject {
 
         // Texture
         this.textureObject = textureObject;
+        this.hasTexture = hasTexture;
         
         // print buffer info
         //console.log(this.bufferInfo);
@@ -201,6 +203,7 @@ class WebGlObject {
             this.rotation,
             this.scale);
             
+        this.uniforms.u_hasTexture = this.hasTexture? 1:0;
         this.uniforms.u_shading_mode = shadingMode;
         this.uniforms.u_transformation_matrix = transfMatrix;
         this.uniforms.u_modelViewMatrix = viewMatrix;

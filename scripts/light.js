@@ -35,19 +35,19 @@ class Light{
         // TODO: Implement option to project on any plane, currently always on xy plane
         
         var lightSource = this.position;
+        
+        
+        // Compute the camera's matrix using look at.
+        var sCameraMatrix = m4.lookAt(cameraPosition, target, up);
 
-        var para1 = translate(lightSource[0], lightSource[1], lightSource[2]);
+        // Make a view matrix from the camera matrix.
+        var sViewMatrix = m4.inverse(sCameraMatrix);
 
-        var src = viewMatrix;
+        var viewM = this.unFlatten4_4Matrix(sViewMatrix);
 
-        para1[0] = [src[0],src[4],src[8],src[12]];
-        para1[1] = [src[1],src[5],src[9],src[13]];
-        para1[2] = [src[2],src[6],src[10],src[14]];
-        para1[3] = [src[3],src[7],src[11],src[15]];
+        var lightPosTranslationM = translate(lightSource[0], lightSource[1], lightSource[2]);
 
-        var para2 = translate(lightSource[0], lightSource[1], lightSource[2]);
-
-        var shadow_modelViewMatrix = mult(para1, para2);
+        var shadow_modelViewMatrix = mult(viewM, lightPosTranslationM);
 
         // Shadows
         var xyPlaneShadowsTransformationMatrix = [];
@@ -60,5 +60,14 @@ class Light{
         shadow_modelViewMatrix = mult(shadow_modelViewMatrix, translate(-lightSource[0], -lightSource[1],-lightSource[2]));
 
         return shadow_modelViewMatrix;
+    }
+
+    unFlatten4_4Matrix(src){
+        var m = mat4();
+        m[0] = [src[0],src[4],src[8],src[12]];
+        m[1] = [src[1],src[5],src[9],src[13]];
+        m[2] = [src[2],src[6],src[10],src[14]];
+        m[3] = [src[3],src[7],src[11],src[15]];
+        return m;
     }
 }

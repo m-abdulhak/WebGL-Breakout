@@ -15,13 +15,14 @@ class ShapeFactory {
         angularSpeed : [0,0,0],
         size : [1,1,1],
         sizeChangeRate : [1,1,1],	
-        scaleLimit: [2,2,2],			
+        scaleLimit: [10000000,10000000000,10000000000],			
         material: {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
             "materialDiffuse" : [ 1.0, 1.0, 1.0 ],
             "materialSpecular" : [ .3, .3, .3 ],
             "materialShininess" : 5.0},
         hasShadow:true,
-        isLight: false};
+        isLight: false,
+        hasTexture: true};
 
     this.Shapes = {
         "Plane" : primitives.createCubeVertices(20),
@@ -131,6 +132,7 @@ class ShapeFactory {
             settings.lightIndex,
             settings.name,
             scene,
-            textureURL);
+            textureURL,
+            settings.hasTexture);
     }
 }
