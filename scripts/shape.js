@@ -53,6 +53,10 @@ class ShapeFactory {
             "materialDiffuse" : [ 0.8, 0.8, 0.8 ],
             "materialSpecular" : [ 1.0, 1.0, 1.0 ],
             "materialShininess" : 10000.0},
+        "Metal" : {	"materialAmbient" : [ 1.0, 1.0, 1.0 ],
+            "materialDiffuse" : [ 0.8, 0.8, 0.8 ],
+            "materialSpecular" : [ 0.5, 0.5, 0.5 ],
+            "materialShininess" : 10000.0},
         "SuperReflective" : {	"materialAmbient" : [ 2.0, 2.0, 2.0 ],
             "materialDiffuse" : [ 1.3, 1.3, 1.3 ],
             "materialSpecular" : [ 2.0, 2.0, 2.0 ],
@@ -73,10 +77,31 @@ class ShapeFactory {
                 settings[k] = parObject[k];
             }
         }
-        //console.log(parObject,settings)
+        
+        return settings;
+    } 
+
+    getLightDefaultsWith(parObject){        
+        var settings = this.getDefaultsWith({
+                            "size":[.1,.1,.1], 
+                            "scaleLimit": [10000,10000,10000], 
+                            "speed":[0,0,0], 
+                            "positionLimits" : {    "Max": [10000,10000,10000] , 
+                                                    "Min": [-10000,-10000,-10000]}, 
+                            "material": this.Materials.Light, 
+                            "isLight": true, 
+                            "lightIndex": 0, 
+                            "hasShadow": false});
+        
+        for (var k in parObject) {
+            if (parObject.hasOwnProperty(k)) {
+                settings[k] = parObject[k];
+            }
+        }
+        
         return settings;
     }
-    
+
     createShape = function(shape, location, color, parameters, scene, textureURL) {
         // print shpae info
         //console.log(shape);

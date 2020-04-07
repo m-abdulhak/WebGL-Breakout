@@ -1,5 +1,16 @@
 class Scene{
     constructor(gl, programInfo, textureObjects){
+        // Consts
+        this.LightColors = {
+            "White" :   [1.0, 1.0, 1.0],
+            "Red" :     [1.0, 0.1, 0.1],
+            "Green" :   [0.1, 1.0, 0.1],
+            "Blue" :    [0.3, 0.3, 1.0],
+            "Yellow" :  [1.0, 1.0, 0.1],
+            "Magneta" : [1.0, 0.1, 1.0],
+            "Gray" :    [0.3, 0.3, 0.3],
+            "Black" :   [0.1, 0.1, 0.1]};
+
         this.gl = gl;
         this.programInfo = programInfo;
         this.ShapeFactory = new ShapeFactory(gl,programInfo);
@@ -11,9 +22,11 @@ class Scene{
             "BottomRight" : [4,1,0.8]};
         this.textureObjects = textureObjects;
         this.lights = [];
-        this.createLights();
         this.objects = [];
         this.createObjects();
+        // TODO: Change lights texture
+        this.lightsTexture = this.textureObjects[1];
+
     }
 
     getPosition(position){
@@ -24,7 +37,7 @@ class Scene{
     createObjects (){
         var sF = this.ShapeFactory;
         
-        const arcade = {
+        const room = {
             depth: 50,
             width: 30,
             height: 20,
@@ -33,7 +46,9 @@ class Scene{
             posScale:10
         }
         
-        this.createArcade(sF, arcade, sF.Materials.Mirror, this.textureObjects[1]);
+        this.createRoom(sF, room, sF.Materials.Metal, this.textureObjects[1]);
+        
+        this.createRoomLights(room);
 
         // position = this.getPosition(this.Positions.TopLeft);
         // parameters = sF.getDefaultsWith({"name": "Cube","angularSpeed":[.1,.1,0], "material": sF.Materials.Matt});
@@ -57,13 +72,13 @@ class Scene{
 
     }
 
-    createArcade(sF, arcade, material, texture){
-        const depth = arcade.depth;
-        const width = arcade.width;
-        const height = arcade.height;
-        const frontHeight = arcade.frontHeight;
-        const zShift = arcade.zShift;    
-        const posScale = arcade.posScale;
+    createRoom(sF, room, material, texture){
+        const depth = room.depth;
+        const width = room.width;
+        const height = room.height;
+        const frontHeight = room.frontHeight;
+        const zShift = room.zShift;    
+        const posScale = room.posScale;
 
         let properties = sF.getDefaultsWith({"name": "Plane", "scaleLimit": [100000,100000,100000], "material": material, "hasShadow": false});
 
@@ -103,8 +118,6 @@ class Scene{
         var parameters = {...properties};
         parameters.size = [width,.1,depth];
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
-
-        this.createLights();
         
         // Attach lights
         // position = [0,0, depth*posScale*1.98];
@@ -124,13 +137,68 @@ class Scene{
         // this.objects.push(sF.createShape(sF.Shapes.Sphere, position, sF.Colors.Glowing,parameters, this, this.textureObjects[1]));
     }
 
-    createLights(){
-        this.createLight([0, 0, 48.9, 1.0]);
-        this.createLight([30, 30, 0, 1.0]);
-        this.createLight([-30, 30, 0, 1.0]);
-        this.createLight([0, 30, 0, 1.0]);
-        this.createLight([70, 70, 220, 0.0], [1.0, 1.0, 1.0],{ specular:.1, diffuse:0.05, ambient:0.005}, [0., 0., -1.0]);
-        this.spotLight = this.lights[4];
+    createRoomLightObjects(){
+
+    }
+
+    createRoomLights(room){
+        const frontLightPosZ = room.depth*2*room.posScale-10;
+        //const lightPosY = -(room.height*room.posScale-30);
+        const lightXPos = room.width*5;
+        const lightXNeg = -room.width*5;
+        const lightYPos = room.height*5;
+        const lightYNeg = -room.height*5;
+        const lightZPos = frontLightPosZ*0.8;
+        const lightZNeg = frontLightPosZ*0.2;
+        const lightZMid = frontLightPosZ/2;
+
+        const highProperties = {specular: .3, diffuse: .8, ambient: 0.005};
+        const dimProperties = {specular: 0.3, diffuse: .3, ambient: 0.005};
+        
+        this.createLight([0, 0, frontLightPosZ/2, 1.0], this.LightColors.White);
+        this.createLight([lightXPos, lightYPos, lightZPos, 1.0], this.LightColors.White, highProperties);
+        this.createLight([lightXPos, lightYPos, lightZNeg, 1.0], this.LightColors.White, highProperties);
+        this.createLight([lightXPos, lightYNeg, lightZPos, 1.0], this.LightColors.White, highProperties);
+        this.createLight([lightXPos, lightYNeg, lightZNeg, 1.0], this.LightColors.White, highProperties);
+        // this.createLightObject([lightXPos, 0, lightZMid, 1.0], this.LightColors.Black, dimProperties);
+        // this.createLightObject([lightXNeg, 0, lightZMid, 1.0], this.LightColors.Black, dimProperties);
+        // this.createLightObject([0, lightYPos, lightZMid, 1.0], this.LightColors.Black, dimProperties);
+        // this.createLightObject([0, lightYNeg, lightZMid, 1.0], this.LightColors.Black, dimProperties);
+        // this.createLightObject([lightXNeg, lightYPos, lightZPos, 1.0], this.LightColors.Red);
+        // this.createLightObject([lightXNeg, lightYPos, lightZNeg, 1.0], this.LightColors.Red);
+        // this.createLightObject([lightXNeg, lightYNeg, lightZPos, 1.0], this.LightColors.Red);
+        // this.createLightObject([lightXNeg, lightYNeg, lightZNeg, 1.0], this.LightColors.Red);
+
+        // Spotlight
+        this.createLight([70, 70, 220, 0.0], [1.0, 1.0, 1.0],{specular:.0, diffuse:0.0, ambient:0.0}, [0., 0., -1.0]);
+        this.spotLight = this.lights[this.lights.length-1];
+    }
+
+    createDimLightObject(position){
+        this.createLightObject( position, 
+                                [1.0, 1.0, 1.0], 
+                                {specular: 0.03, diffuse: .08, ambient: 0.00005}, 
+                                [0, 0, 0], 
+                                {"Max" : [1000, 1000, 1000],"Min" : [-1000, -1000,-1000]}, 
+                                [0, 0, 0]);
+    }
+
+    createLightObject(  position = [0, 0, 0], 
+                        color = [1.0, 1.0, 1.0], 
+                        properties = {specular: 0.3, diffuse: .8, ambient: 0.005}, 
+                        speed = [0, 0, 0], 
+                        positionLimits = {"Max" : [1000, 1000, 1000],"Min" : [-1000, -1000,-1000]}, 
+                        direction = [0, 0, 0]){
+
+        var sF = this.ShapeFactory;
+
+        var parameters = sF.getLightDefaultsWith({  "speed": speed, 
+                                                    "positionLimits" : positionLimits,
+                                                    "lightIndex": this.lights.length });
+        
+        this.createLight(position, color, properties, direction);
+        
+        this.objects.push(sF.createShape(sF.Shapes.Sphere, position, sF.Colors.Glowing,parameters, this, this.lightsTexture));
     }
 
     createLight(position=[0, 0, 0], color=[1.0, 1.0, 1.0], properties={specular: 0.3, diffuse: .8, ambient: 0.005}, direction = [0, 0, 0]){
