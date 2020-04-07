@@ -314,4 +314,10 @@ class WebGlObject {
         gl.uniform1i(this.programInfo.program.u_texture, 0);
     }
 
+    collidesWith(object){
+        //console.log("Collides? ", object, this);
+        
+        return Math.random()>0.1;
+    }
+
 }

@@ -16,10 +16,11 @@ class Scene{
             width: 30,
             height: 20,
             frontHeight: 20,
-            zShift : -1.1,
+            zShift : -2,
             posScale:10
         }
         
+        // gameplay settings
         this.ballSize = 1;
 
         this.gl = gl;
@@ -34,6 +35,7 @@ class Scene{
         this.textureObjects = textureObjects;
         this.lights = [];
         this.objects = [];
+        this.blocks = [];
         this.createObjects();
         // TODO: Change lights texture
         this.lightsTexture = this.textureObjects[1];
@@ -99,7 +101,7 @@ class Scene{
         var position = [0, (-height+frontHeight)*posScale, depth*2*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [];
-        var parameters = sF.getDefaultsWith({"name": "Plane", "size":[width,frontHeight,.1], "material": sF.Materials.Mirror, "hasShadow": false});
+        var parameters = sF.getDefaultsWith({"name": "Plane", "size":[width,frontHeight,.1], "material": sF.Materials.Mirror});
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
 
         // left side
@@ -170,6 +172,7 @@ class Scene{
         var position = [xPos, yPos, zPos];
         properties.size = [width, height, depth];
         this.objects.push(sF.createShape(sF.Shapes.Cube, position, multByScalar(sF.Colors.Red,Math.random()/5+0.8), properties, this, texture));
+        this.blocks.push(this.objects[this.objects.length-1])
     }
 
     createBall(xPos, yPos, zPos, radius, material, texture){
@@ -186,11 +189,11 @@ class Scene{
                                                 "speed":[100,100,0], 
                                                 "positionLimits" : posLimits, 
                                                 "material": material, 
-                                                "hasShadow": false,  
+                                                "hasShadow": true,  
                                                 "hasTexture": true});
 
         this.objects.push(sF.createShape(sF.Shapes.Sphere, position, sF.Colors.White, parameters, this, texture));
-        this.Ball = this.objects[this.objects.lenght-1];
+        this.ball = this.objects[this.objects.length-1];
     }
     
     createPlatform(xPos, yPos, zPos, width, height, depth, material, texture){
@@ -200,7 +203,7 @@ class Scene{
         var posLimits = this.getRoomLimitsFor([width, height, depth]);        
         
         let properties = sF.getDefaultsWith({   "name": "Platform", 
-                                                "speed":[200, 0, 0], 
+                                                "speed":[0, 0, 0], 
                                                 "positionLimits": posLimits, 
                                                 "material": material, 
                                                 "hasShadow": false, 
@@ -211,24 +214,7 @@ class Scene{
         parameters.size = [width, height, depth];
         
         this.objects.push(sF.createShape(sF.Shapes.Cube, position, multByScalar(sF.Colors.Red,Math.random()/5+0.8), parameters, this, texture));
-        this.Platrom = this.objects[this.objects.lenght-1];
-    }
-
-    getRoomLimitsFor(size){
-        const room = this.room;
-        const width = size[0];
-        const height = size[1];
-        const depth = size[2];
-
-        const frontLightPosZ = room.depth*2*room.posScale-10;
-
-
-        return{ "Max" : [(room.width-width)*room.posScale, (room.height-height)*room.posScale, frontLightPosZ-depth*room.posScale],
-                "Min" : [-(room.width-width)*room.posScale, -(room.height-height)*room.posScale, depth*room.posScale]};
-    }
-
-    createRoomLightObjects(){
-
+        this.platform = this.objects[this.objects.length-1];
     }
 
     createRoomLights(){
@@ -247,7 +233,7 @@ class Scene{
         const highProperties = {specular: .3, diffuse: .8, ambient: 0.005};
         const dimProperties = {specular: 0.3, diffuse: .1, ambient: 0.005};
 
-        this.createLightObject([0, 0, frontLightPosZ/2, 1.0], this.LightColors.White, highProperties);
+        this.createLight([0, 0, frontLightPosZ/2, 1.0], this.LightColors.White, highProperties);
         this.createLight([lightXPos, lightYPos, lightZPos, 1.0], this.LightColors.White, highProperties);
         this.createLight([lightXPos, lightYPos, lightZNeg, 1.0], this.LightColors.White, highProperties);
         this.createLight([lightXPos, lightYNeg, lightZPos, 1.0], this.LightColors.White, highProperties);
@@ -267,6 +253,7 @@ class Scene{
     createMovingLightObject(sides, speeds, properties = {specular: 0.3, diffuse: .1, ambient: 0.005}){
         let sizeLimits = this.getRoomLimitsFor([.1,.1,.1,]);
         const baseSpeeds = [-2000, -2000, -2000];
+        sizeLimits.Min[2] = this.room.posScale * this.room.depth/4;
 
         let xPos = sides[0]*sizeLimits.Max[0];
         let yPos = sides[1]*sizeLimits.Max[1];
@@ -280,7 +267,7 @@ class Scene{
                                     this.LightColors.Blue, 
                                     properties, 
                                     finalSpeed,
-                                    this.getRoomLimitsFor([.1, .1, .1]));
+                                    sizeLimits);
     }
 
     createDimLightObject(position){
@@ -319,6 +306,20 @@ class Scene{
         return light;
     }
 
+
+    getRoomLimitsFor(size){
+        const room = this.room;
+        const width = size[0];
+        const height = size[1];
+        const depth = size[2];
+
+        const frontLightPosZ = room.depth*2*room.posScale-10;
+
+
+        return{ "Max" : [(room.width-width)*room.posScale, (room.height-height)*room.posScale, frontLightPosZ-depth*room.posScale],
+                "Min" : [-(room.width-width)*room.posScale, -(room.height-height)*room.posScale, depth*room.posScale]};
+    }
+
     changeSpotLightDirection(direction){
         this.spotLight.direction = direction;
     }
@@ -355,16 +356,19 @@ class Scene{
         this.objects[objIndex].toggleAnimation();
     }			
 
-    movePlatformRight(){
+    movePlatformRight(movement){
         try {
-            this.Platrom.position[0] += 40;
+            this.platform.position[0] += movement[0];
         } catch (error) {
-            
+            console.log("Please wait while the game is loading!")
         }
-
     }
     
-    movePlatformLeft(){
-
+    movePlatformLeft(movement){
+        try {
+            this.platform.position[0] -= movement[0];
+        } catch (error) {
+            console.log("Please wait while the game is loading!")
+        }
     }
 }

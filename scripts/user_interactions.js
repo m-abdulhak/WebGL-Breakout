@@ -11,56 +11,8 @@ var matrialPropertiesSliders = document.getElementsByClassName("materialProperty
 var selectedShape = shapeSelectionSlider.value; 
 
 document.onkeydown = function(e) {
-    var dir = [-cameraPosition[0]+target[0],
-                    -cameraPosition[1]+target[1],
-                    -cameraPosition[2]+target[2],
-                    0];
-
-    var normDir = normalize(dir);
-    var translateVec = multByScalar(normDir,5);
-
     if (e.which >= '1'.charCodeAt(0) && e.which <= '9'.charCodeAt(0)){
         scene.toggleAnimation(e.which-48);
-    }
-    else if (e.which == 'W'.charCodeAt(0)){ // Forward
-        cameraPosition = vecAdd(cameraPosition,translateVec);
-        target = vecAdd(target,translateVec);
-        orthoscale *= .99; 
-        moveSpotLight(0,0);
-    }
-    else if (e.which == 'S'.charCodeAt(0)){ // Back
-        cameraPosition = vecAdd(cameraPosition,multByScalar(translateVec,-1));
-        target = vecAdd(target,multByScalar(translateVec,-1));
-        orthoscale *= 1.01;
-        moveSpotLight(0,0);
-    }
-    else if (e.which == 'A'.charCodeAt(0)){ // left
-        var newDir = rotateY(normDir,-3.1415/10);
-        target = vecAdd(cameraPosition,newDir);
-        moveSpotLight(0,0);
-    }
-    else if (e.which == 'D'.charCodeAt(0)){ // right
-        var newDir = rotateY(normDir,3.1415/10);
-        target = vecAdd(cameraPosition,newDir);
-        moveSpotLight(0,0);
-    }
-    else if (e.which == 'E'.charCodeAt(0)){ // up
-        var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
-        var newDirInCamerCoor = normalize(rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],-3.1415/10));
-        var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
-        if(newDir[1]<0.8){
-            target = vecAdd(cameraPosition,newDir);
-        }
-        moveSpotLight(0,0);
-    }
-    else if (e.which == 'Q'.charCodeAt(0)){ // down
-        var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
-        var newDirInCamerCoor = normalize(rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],3.1415/10));
-        var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
-        if(newDir[1]>-0.8){
-            target = vecAdd(cameraPosition,newDir);
-        }
-        moveSpotLight(0,0);
     }
     else if (e.which == 'O'.charCodeAt(0)){
         console.log('Orthographic');

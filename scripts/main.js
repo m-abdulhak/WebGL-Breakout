@@ -1,5 +1,6 @@
 "use strict";
 
+var game;
 var scene;
 var paused = false;
 var shadingMode = 0;
@@ -40,7 +41,8 @@ function main() {
     linkTextures();
 
     scene = new Scene(gl, programInfo, textureObjects);
-    
+    game = new GameController(scene);
+
     selectedLightChanged();		
     lightIntensitySlidersChanged();
     selectedShapeChanged();
@@ -74,6 +76,8 @@ function main() {
         // ------ Draw Objects --------
         if(!paused){
             scene.render(time);
+            game.checkControls(time);
+            game.checkCollisions();
         }
 
         requestAnimationFrame(render);
