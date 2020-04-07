@@ -4,13 +4,14 @@ var scene;
 var paused = false;
 var shadingMode = 0;
 
-var cameraPosition = [70, 70, 220];
+var cameraPosition = [0, 30, 900];
 var target = [cameraPosition[0], cameraPosition[1], cameraPosition[2]-1];
 var up = [0, 100, 0];
 var cameraMatrix = [];
 var viewMatrix = [];
 var projectionMatrix = [];
 var orthoscale = 1;
+var fov = 30;
 
 var viewTypes = {'Orthographic':0,'Perspective':1};
 var view = viewTypes['Perspective'];
@@ -124,7 +125,7 @@ var setViewOrtho = function (gl) {
 }
 
 var setViewPerspective = function (gl) {
-    var fieldOfViewRadians = degToRad(60);
+    var fieldOfViewRadians = degToRad(fov);
     var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     return m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 }
@@ -135,7 +136,8 @@ var textureUrls = [
     "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_Craft_01_ambientocclusion.jpg",
     "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_denim_01_basecolor.jpg",
     "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_laces_01_basecolor.jpg",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_valvet_01_basecolor.jpg"];
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_valvet_01_basecolor.jpg",
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_linen_01_basecolor.jpg"];
 var textureImages = [];
 var textureObjects = [];
 
@@ -177,6 +179,7 @@ var linkTextures = function(){
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, textureImage);
         
         gl.generateMipmap(gl.TEXTURE_2D);
+        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
         textureObjects.push(texture);
