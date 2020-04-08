@@ -1,5 +1,10 @@
 "use strict";
 
+
+var gameTime = 0;
+var gameTimeScale = 1;
+var lastTime = 0;
+
 var game;
 var scene;
 var paused = false;
@@ -51,7 +56,7 @@ function main() {
 
     // Draw the scene.
     function render(time) {
-        var t = time /1000;
+        if(!paused){
 
         webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
@@ -74,12 +79,12 @@ function main() {
         viewMatrix = m4.inverse(cameraMatrix);
 
         // ------ Draw Objects --------
-        if(!paused){
-            scene.render(time);
-            game.checkControls(time);
+            gameTime += (time-lastTime) / gameTimeScale;
+            scene.render(gameTime);
+            game.checkControls(gameTime);
             game.checkCollisions();
         }
-
+        lastTime = time;
         requestAnimationFrame(render);
     }
 

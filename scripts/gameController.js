@@ -86,7 +86,6 @@ class GameController{
         }
     }
 
-
     keyDown(e){
         keyState[e.keyCode || e.which] = true;
         
@@ -96,6 +95,8 @@ class GameController{
         if (e.keyCode == 39){
             platformSpeed[0] = this.scene.platformBaseSpeed[0]*200; 
         }
+
+        setTimeScale(e.shiftKey);
     }
 
     keyUp(e){
@@ -104,6 +105,8 @@ class GameController{
         if (e.keyCode == 37 || e.keyCode == 39){
             platformSpeed = [0, 0, 0]; 
         }
+
+        setTimeScale(e.shiftKey);
     }
     
     checkControls(time){
@@ -166,12 +169,10 @@ class GameController{
     } 
 }
 
-
-// const valuesArr = ['v1', 'v2', 'v3', 'v4', 'v5'];   
-// const removeValFromIndex = [0, 2, 4];
-
-// const indexSet = new Set(removeValFromIndex);
-
-// const arrayWithValuesRemoved = valuesArr.filter((value, i) => !indexSet.has(i));
-
-// console.log(arrayWithValuesRemoved);
+var setTimeScale = function(shift){
+    if(shift){
+        gameTimeScale = 10;
+    } else{
+        gameTimeScale = 1;
+    }
+}
