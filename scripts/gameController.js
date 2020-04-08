@@ -45,7 +45,7 @@ class GameController{
 
         if(plat.collidesWithSphere(ball)){
             ball.speed[0] = (ball.speed[0]*2+platformSpeed[0])/3;
-            ball.speed[1] = [-ball.speed[1]];
+            ball.speed[1] = 100;
 
             if(Math.abs(ball.speed[0])<30){
                 ball.speed[0] = ball.speed[0] > 0 ? 30:-30;
