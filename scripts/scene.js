@@ -22,6 +22,7 @@ class Scene{
         
         // gameplay settings
         this.ballSize = 1;
+        this.platformBaseSpeed = [5,0,0];
 
         this.gl = gl;
         this.programInfo = programInfo;
@@ -32,15 +33,21 @@ class Scene{
             "TopRight" : [4,4,0.8],
             "BottomLeft" : [1,1,0.8],
             "BottomRight" : [4,1,0.8]};
+
+        // Load Textures
         this.textureObjects = textureObjects;
+        // TODO: Change lights texture
+        this.lightsTexture = this.textureObjects[1];
+        this.wallsTexture = this.textureObjects[1];
+        this.ballTexture = this.textureObjects[0];
+        this.blocksTexture = this.textureObjects[4];
+        this.platformTexture = this.textureObjects[4];
+
+
         this.lights = [];
         this.objects = [];
         this.blocks = [];
         this.createObjects();
-        // TODO: Change lights texture
-        this.lightsTexture = this.textureObjects[1];
-        
-
     }
 
     getPosition(position){
@@ -51,7 +58,7 @@ class Scene{
     createObjects (){
         var sF = this.ShapeFactory;
         
-        this.createRoom(sF.Materials.Metal, this.textureObjects[1]);
+        this.createRoom(sF.Materials.Metal);
         
         this.createRoomLights();
 
@@ -79,7 +86,7 @@ class Scene{
 
     }
 
-    createRoom(material, texture){
+    createRoom(material){
         var sF = this.ShapeFactory;
 
         const depth = this.room.depth;
@@ -95,38 +102,38 @@ class Scene{
         var position = [0, 0, zShift];
         var parameters = {...properties};
         parameters.size = [width, height, .1];
-        this.objects.push(sF.createShape(sF.Shapes.Plane, position, sF.Colors.Gray, parameters, this, texture));
+        this.objects.push(sF.createShape(sF.Shapes.Plane, position, sF.Colors.Gray, parameters, this, this.wallsTexture));
 
         // front side
         var position = [0, (-height+frontHeight)*posScale, depth*2*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [];
         var parameters = sF.getDefaultsWith({"name": "Plane", "size":[width,frontHeight,.1], "material": sF.Materials.Mirror});
-        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
+        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
 
         // left side
         position = [-width*posScale, 0, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [.1,height,depth];
-        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
+        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
 
         // right side
         position = [width*posScale, 0, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [.1,height,depth];
-        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
+        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
 
         // top side
         position = [0, height*posScale, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [width,.1,depth];
-        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
+        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
 
         // top side
         position = [0, -height*posScale, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [width,.1,depth];
-        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.textureObjects[1]));
+        this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
     }
 
     createGameElements(material){
@@ -147,7 +154,9 @@ class Scene{
             let i = 0;
             while(xPos<xEndtPos){
                 let yPos = yStartPos+j*(height*2*room.posScale+3);
-                let texture = this.textureObjects[5];
+
+                // TODO: choose different texture for each block
+                let texture = this.blocksTexture;
 
                 this.createBlock(xPos, yPos, zPos, width, height, depth, material, texture);
 
@@ -156,9 +165,9 @@ class Scene{
             }   
         }
 
-        this.createBall(0, yStartPos/2, zPos, this.ballSize, material, this.textureObjects[0]);
+        this.createBall(0, yStartPos/2, zPos, this.ballSize, material, this.ballTexture);
 
-        this.createPlatform(0, (room.height*7/10)*room.posScale, zPos, width*2, height/6, depth, material, this.textureObjects[6]);
+        this.createPlatform(0, (room.height*7/10)*room.posScale, zPos, width*2, height/6, depth, material, this.platformTexture);
     }
 
     createBlock(xPos, yPos, zPos, width, height, depth, material, texture){
@@ -187,6 +196,7 @@ class Scene{
         var parameters = sF.getDefaultsWith({   "name": "Ball", 
                                                 "size": [radius, radius, radius],
                                                 "speed":[100,100,0], 
+                                                "angularSpeed": [0, 0, 10],
                                                 "positionLimits" : posLimits, 
                                                 "material": material, 
                                                 "hasShadow": true,  
@@ -355,20 +365,4 @@ class Scene{
     toggleAnimation(objIndex){
         this.objects[objIndex].toggleAnimation();
     }			
-
-    movePlatformRight(movement){
-        try {
-            this.platform.position[0] += movement[0];
-        } catch (error) {
-            console.log("Please wait while the game is loading!")
-        }
-    }
-    
-    movePlatformLeft(movement){
-        try {
-            this.platform.position[0] -= movement[0];
-        } catch (error) {
-            console.log("Please wait while the game is loading!")
-        }
-    }
 }

@@ -68,6 +68,9 @@ class ShapeFactory {
             "materialShininess" : 1.0}						
         };
         this.DefaultColor = this.Colors.Red;
+
+        // unique object id
+        this.uniqueId = 0;
     }
 
     getDefaultsWith(parObject){
@@ -133,6 +136,12 @@ class ShapeFactory {
             settings.name,
             scene,
             textureURL,
-            settings.hasTexture);
+            settings.hasTexture,
+            this.getUniqueId());
+    }
+
+    getUniqueId(){
+        this.uniqueId += 1;
+        return this.uniqueId;
     }
 }

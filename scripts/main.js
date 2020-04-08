@@ -5,14 +5,14 @@ var scene;
 var paused = false;
 var shadingMode = 0;
 
-var cameraPosition = [0, 30, 900];
-var target = [cameraPosition[0], cameraPosition[1], cameraPosition[2]-1];
+var cameraPosition = [0, -60, 700];
+var target = [cameraPosition[0], cameraPosition[1]+0.1, cameraPosition[2]-1];
 var up = [0, 10, 0];
 var cameraMatrix = [];
 var viewMatrix = [];
 var projectionMatrix = [];
 var orthoscale = 1;
-var fov = 30;
+var fov = 40;
 
 var viewTypes = {'Orthographic':0,'Perspective':1};
 var view = viewTypes['Perspective'];
@@ -134,14 +134,18 @@ var setViewPerspective = function (gl) {
     return m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 }
 
+
 var textureUrls = [
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/1k/TexturesCom_Paint_Chipped_1K_albedo.png",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/1k/TexturesCom_Scifi_Panel_1K_height.png",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_Craft_01_ambientocclusion.jpg",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_denim_01_basecolor.jpg",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_laces_01_basecolor.jpg",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_valvet_01_basecolor.jpg",
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Fabric_linen_01_basecolor.jpg"];
+    // rock ball
+    "https://raw.githubusercontent.com/m-abdulhak/Images/master/Ball1k.png",
+    // white metal walls
+    "https://raw.githubusercontent.com/m-abdulhak/Images/master/Walls1k.png",
+    // red tiles
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_03_basecolor.jpg",
+    // green tiles
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_06_basecolor.jpg",
+    // black tiles
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_09_basecolor.jpg"];
 var textureImages = [];
 var textureObjects = [];
 

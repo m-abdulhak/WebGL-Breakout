@@ -10,7 +10,7 @@ class WebGlObject {
                     "Min" : [-1000, -1000,-1000]
                 },
                 orientation=[0,0,0], 
-                orientationChangeRate=[0,0,0],
+                angularSpeed=[0,0,0],
                 size=[1,1,1],  
                 sizeChangeRate=[1,1,1], 
                 scaleLimit=[10,10,10],			
@@ -24,8 +24,10 @@ class WebGlObject {
                 name,
                 scene,
                 textureObject = null,
-                hasTexture = true) {
-
+                hasTexture = true,
+                uniqueId) {
+        
+        this._Id = uniqueId;
         this.gl = gl;
         this.programInfo = programInfo;
         
@@ -44,7 +46,7 @@ class WebGlObject {
         this.rotation = orientation;
         this.scale = size;
         this.speed = speed;
-        this.orientationChangeRate = orientationChangeRate;
+        this.angularSpeed = angularSpeed;
         this.sizeChangeRate = sizeChangeRate;
         this.time = 0;
         this.scaleLimit = scaleLimit;
@@ -99,7 +101,7 @@ class WebGlObject {
         this.bounce(this.position,this.speed, this.positionLimits.Max,this.positionLimits.Min);
         this.translation = [this.position[0],this.position[1],this.position[2]];
 
-        this.rotation = this.simulate(this.rotation,this.orientationChangeRate,delta);
+        this.rotation = this.simulate(this.rotation,this.angularSpeed,delta);
         
         this.scale = this.simulateSize(this.scale,this.sizeChangeRate,delta);
         this.bounceScale(this.scaleLimit);
@@ -314,10 +316,104 @@ class WebGlObject {
         gl.uniform1i(this.programInfo.program.u_texture, 0);
     }
 
-    collidesWith(object){
-        //console.log("Collides? ", object, this);
-        
-        return Math.random()>0.1;
+    minXPos(){
+        return this.position[0]-this.scale[0]*10;
     }
 
+    maxXPos(){
+        return this.position[0]+this.scale[0]*10;
+    }
+
+    minYPos(){
+        return this.position[1]-this.scale[1]*10;
+    }
+
+    maxYPos(){
+        return this.position[1]+this.scale[1]*10;
+    }
+
+    minZPos(){
+        return this.position[2]-this.scale[2]*10;
+    }
+
+    maxZPos(){
+        return this.position[2]+this.scale[2]*10;
+    }
+
+    collidesWithCube(object){
+        const tMinX = this.minXPos();
+        const tMaxX = this.maxXPos();
+        const tMinY = this.minYPos();
+        const tMaxY = this.maxYPos();
+        const tMinZ = this.minZPos();
+        const tMaxZ = this.maxZPos();
+
+        const oMinX = object.minXPos();
+        const oMaxX = object.maxXPos();
+        const oMinY = object.minYPos();
+        const oMaxY = object.maxYPos();
+        const oMinZ = object.minZPos();
+        const oMaxZ = object.maxZPos();
+
+        const collisionCond =   (tMinX <= oMaxX && tMaxX >= oMinX) &&
+                                (tMinY <= oMaxY && tMaxY >= oMinY) &&
+                                (tMinZ <= oMaxZ && tMaxZ >= oMinZ);
+        
+        return collisionCond;
+    }
+
+    collidesWithSphere(object){
+        const tMinX = this.minXPos();
+        const tMaxX = this.maxXPos();
+        const tMinY = this.minYPos();
+        const tMaxY = this.maxYPos();
+        const tMinZ = this.minZPos();
+        const tMaxZ = this.maxZPos();
+
+        // get box closest point to sphere center by clamping
+        var x = Math.max(tMinX, Math.min(object.position[0], tMaxX));
+        var y = Math.max(tMinY, Math.min(object.position[1], tMaxY));
+        var z = Math.max(tMinZ, Math.min(object.position[2], tMaxZ));
+
+        const oMinX = object.minXPos();
+        const oMaxX = object.maxXPos();
+        const oMinY = object.minYPos();
+        const oMaxY = object.maxYPos();
+        const oMinZ = object.minZPos();
+        const oMaxZ = object.maxZPos();
+
+        const collisionCond =   (x <= oMaxX && x >= oMinX) &&
+                                (y <= oMaxY && y >= oMinY) &&
+                                (z <= oMaxZ && z >= oMinZ);
+        
+        return collisionCond;
+    }
+
+    bounceOffCube(cube){
+        const t = this;
+
+        const bounceDir = [1, 1, 1];
+
+        const cMinX = cube.minXPos();
+        const cMaxX = cube.maxXPos();
+        const cMinY = cube.minYPos();
+        const cMaxY = cube.maxYPos();
+        const cMinZ = cube.minZPos();
+        const cMaxZ = cube.maxZPos();
+
+        const bounceFromLeft = t.position[0] < cMinX; 
+        const bounceFromRight = t.position[0] > cMaxX;
+        const bounceFromBelow = t.position[1] < cMinY; 
+        const bounceFromTop = t.position[1] > cMaxY;  
+        const bounceFromBack = t.position[2] < cMinZ; 
+        const bounceFromFront = t.position[2] > cMaxZ; 
+
+        bounceDir[0] = bounceFromLeft || bounceFromRight? -1 : 1;
+        bounceDir[1] = bounceFromBelow || bounceFromTop? -1 : 1;
+        bounceDir[2] = bounceFromBack || bounceFromFront? -1 : 1;
+
+        t.speed[0] *= bounceDir[0]; 
+        t.speed[1] *= bounceDir[1]; 
+        t.speed[2] *= bounceDir[2]; 
+    }
 }
