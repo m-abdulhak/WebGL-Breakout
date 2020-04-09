@@ -248,10 +248,13 @@ var setTimeScale = function(shift){
 }
 
 var showEndGameScreen = function(){
+    score += lives*5;
     document.getElementById("end-screen").classList.remove("hidden");
     if(lost){
         document.getElementById("game-result").innerHTML = "Lost!";
+        document.getElementById("game-result").classList.add("red");
     } else{
         document.getElementById("game-result").innerHTML = "Won!";
+        document.getElementById("game-result").classList.add("key");
     }
 }

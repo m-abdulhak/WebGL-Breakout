@@ -26,6 +26,10 @@ canvas {
     color: #34a21a;
     font-weight: 700;
 }
+.red{
+    color: #b30707;
+    font-weight: 700;
+}
 .active{
     font-weight: 900;
 }
