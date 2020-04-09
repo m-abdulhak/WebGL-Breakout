@@ -163,7 +163,7 @@ class GameController{
             platformSpeed[0] = this.scene.platformBaseSpeed[0]*200; 
         }
 
-        if(!started || this.scene.ball.stopped()){
+        if((!started || this.scene.ball.stopped()) && (e.keyCode == 37 || e.keyCode == 39)){
             started = true;
             this.scene.ball.speed = [80, 100, 0];
         }
