@@ -123,7 +123,7 @@ class GameController{
 
     decreaseLives(){
         lives = lives - 1;
-        if(lives<0){
+        if(lives<0 && !won){
             this.endGame();
         }
     }
