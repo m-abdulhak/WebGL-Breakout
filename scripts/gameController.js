@@ -1,4 +1,5 @@
 var keyState = {}; 
+var started = false;
 var platformSpeed = [0,0,0];
 var minBallSpeed = 30;
 var maxBallSpeed = 400;
@@ -106,6 +107,11 @@ class GameController{
 
         if (e.keyCode == 37 || e.keyCode == 39){
             platformSpeed = [0, 0, 0]; 
+        }
+        
+        if(!started){
+            started = true;
+            this.scene.ball.speed = [100, 100, 0];
         }
 
         setTimeScale(e.shiftKey);

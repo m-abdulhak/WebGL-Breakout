@@ -165,7 +165,7 @@ class Scene{
             }   
         }
 
-        this.createBall(0, yStartPos/2, zPos, this.ballSize, material, this.ballTexture);
+        this.createBall(0, -(room.height*3/10)*room.posScale, zPos, this.ballSize, material, this.ballTexture);
 
         this.createPlatform(0, (room.height*7/10)*room.posScale, zPos, width*2, height/6, depth, material, this.platformTexture);
     }
@@ -195,7 +195,7 @@ class Scene{
 
         var parameters = sF.getDefaultsWith({   "name": "Ball", 
                                                 "size": [radius, radius, radius],
-                                                "speed":[100,100,0], 
+                                                "speed":[0,0,0], 
                                                 "angularSpeed": [0, 0, 10],
                                                 "positionLimits" : posLimits, 
                                                 "material": material, 

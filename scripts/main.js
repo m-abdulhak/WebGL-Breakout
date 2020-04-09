@@ -172,13 +172,16 @@ var loadTextures = function(){
                         texturesDowloaded = false;
                     }
                 });
-                if(texturesDowloaded){
+                if(texturesDowloaded && !loaded){
+                    loaded = true;
                     main();
                 }
             }
         });        
     });
 }
+
+var loaded = false;
 
 var linkTextures = function(){
     textureImages.forEach(textureImage => {
