@@ -211,12 +211,16 @@ class GameController{
         }
         if(keyState['W'.charCodeAt(0)]){
             cameraPosition = vecAdd(cameraPosition,translateVec);
+            const posLimits = this.scene.getRoomLimitsFor([1,1,1]);
+            limitVector(cameraPosition, posLimits.Max, posLimits.Min);
             target = vecAdd(target,translateVec);
             orthoscale *= .99; 
             moveSpotLight(0,0);
         }
         if(keyState['S'.charCodeAt(0)]){
             cameraPosition = vecAdd(cameraPosition,multByScalar(translateVec,-1));
+            const posLimits = this.scene.getRoomLimitsFor([1,1,1]);
+            limitVector(cameraPosition, posLimits.Max, posLimits.Min);
             target = vecAdd(target,multByScalar(translateVec,-1));
             orthoscale *= 1.01;
             moveSpotLight(0,0);
@@ -271,5 +275,16 @@ var showEndGameScreen = function(){
         won = true;
         document.getElementById("game-result").innerHTML = "Won!";
         document.getElementById("game-result").classList.add("key");
+    }
+}
+
+var limitVector = function(vector,limitsHigh,limitsLow){
+    for (var i = 0; i < vector.length; i++) {
+        if(vector[i]>limitsHigh[i]){
+            vector[i] = limitsHigh[i];
+        }
+        if(vector[i]<limitsLow[i]){
+            vector[i] = limitsLow[i];
+        }
     }
 }
