@@ -12,6 +12,8 @@ var shadingMode = 0;
 
 var cameraPosition = [0, -60, 700];
 var target = [cameraPosition[0], cameraPosition[1]+0.1, cameraPosition[2]-1];
+var defCameraPosition = [0, -60, 700];
+var defTarget = [cameraPosition[0], cameraPosition[1]+0.1, cameraPosition[2]-1];
 var up = [0, 10, 0];
 var cameraMatrix = [];
 var viewMatrix = [];

@@ -9,6 +9,16 @@
 <body>
 <div id="pause-screen" class="hidden"><h1 class="pause-title">Press Space To Continue!</h1></div>
 <canvas id="canvas"></canvas>
+<div id="game-ui">
+	<div class="ui-left">
+		<p>Reset Camera <span class="key">R</span></p>
+		<p>Control Camera <span class="key"><img src="https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/icons/wasd-green.png"></span></p>
+	</div>
+	<div class="ui-right">
+		<p><span class="key">SHIFT</span> Slow Time</p>
+		<p><span class="key"><i class='fas fa-angle-left'></i> <i class='fas fa-angle-right'></i></span> Control Platform</p>
+	</div>
+</div>
 <div id="sidebar" class="hidden">
 	<h4>WebGL Demo</h4>
 	<span class="action"><span class="key">W - S</span>  Move Forwards / Backwards</span>
@@ -285,6 +295,7 @@ void main() {
 	}
 }
 </script>
+<script src='https://kit.fontawesome.com/a076d05399.js'></script>
 <script type="text/javascript" src="common/webgl-utils.js"></script>
 <script type="text/javascript" src="common/m4.js"></script>
 <script type="text/javascript" src="common/primitives.js"></script>

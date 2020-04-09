@@ -1,5 +1,7 @@
 var keyState = {}; 
 var platformSpeed = [0,0,0];
+var minBallSpeed = 30;
+var maxBallSpeed = 400;
 var ballAngularSpeedRate = 10;
 
 class GameController{
@@ -44,14 +46,14 @@ class GameController{
         const plat = this.scene.platform;
 
         if(plat.collidesWithSphere(ball)){
-            ball.speed[0] = (ball.speed[0]*2+platformSpeed[0])/3;
+            ball.speed[0] = (ball.speed[0]*3+platformSpeed[0])/4;
             ball.speed[1] = 100;
 
-            if(Math.abs(ball.speed[0])<30){
-                ball.speed[0] = ball.speed[0] > 0 ? 30:-30;
+            if(Math.abs(ball.speed[0])<minBallSpeed){
+                ball.speed[0] = ball.speed[0] > 0 ? minBallSpeed:-minBallSpeed;
             }
-            if(Math.abs(ball.speed[0])>200){
-                ball.speed[0] = ball.speed[0] > 0 ? 200:-200;
+            if(Math.abs(ball.speed[0])>maxBallSpeed){
+                ball.speed[0] = ball.speed[0] > 0 ? maxBallSpeed:-maxBallSpeed;
             }
         }
     }

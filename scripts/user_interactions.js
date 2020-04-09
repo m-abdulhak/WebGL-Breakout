@@ -82,6 +82,10 @@ document.onkeydown = function(e) {
         scene.increaseSpotlightInnerLimit();
         scene.increaseSpotlightOuterLimit();
     }
+    else if(e.keyCode == 'R'.charCodeAt(0)){
+        cameraPosition = defCameraPosition;
+        target = defTarget;
+    }
 };
 
 document.onmousemove = function( event ) {

@@ -1,6 +1,7 @@
 @import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
 body {
   margin: 0;
+  font-family: sans-serif;
 }
 canvas {
   width: 100vw;
@@ -41,7 +42,7 @@ canvas {
     color: #FFFFFA;
     background: #6b6971;
     font-size: 3em;
-    font-family: sans-serif;
+    opacity: 0.5;
 }
 .pause-title{ 
     position: absolute;
@@ -81,4 +82,37 @@ canvas {
     height: 25px;
     background: #4CAF50;
     cursor: pointer;
+}
+#game-ui{
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+}
+#game-ui div{
+    position: fixed;
+    bottom: 100px;
+    font-size: 2.5em;
+    font-weight: 700;
+    opacity: 0.8;
+    color: white;
+    -webkit-text-stroke: 1px gray;
+}
+#game-ui .ui-left{
+    left: 100px;
+    transform: perspective(500px) rotateY(35deg);
+    text-align: left;
+}
+#game-ui .ui-right{
+    right: 100px;
+    transform: perspective(500px) rotateY(-35deg);
+    text-align: right;
+}
+#game-ui .ui-left .key, #game-ui .ui-right .key{
+    color: #2b711b;
+    -webkit-text-stroke: 1px #309c17;
+}
+#game-ui img{
+    width: 100px;
 }
