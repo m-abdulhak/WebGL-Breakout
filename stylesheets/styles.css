@@ -31,8 +31,10 @@ canvas {
 }
 .hidden{
     display: none;
+} 
+{
 }
-#pause-screen{
+#pause-screen, #end-screen{
     width: 100%;
     height: 100%;
     position: fixed;
@@ -44,11 +46,17 @@ canvas {
     font-size: 3em;
     opacity: 0.5;
 }
-.pause-title{ 
+#end-screen{
+    opacity: 1;
+}
+.pause-title, .end-title{ 
     position: absolute;
     left: 0;
     right: 0;
     top: 40%;
+}	
+.end-title{ 
+    top: 20%;
 }	
 .light-intensity-title, .material-properties-title{
     margin-left: 20px;

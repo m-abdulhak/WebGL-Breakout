@@ -117,7 +117,7 @@ class GameController{
 
     endGame(){
         lost = true;
-        alert("Lost!");
+        showEndGameScreen();
     }
 
     movePlatformRight(movement){
@@ -152,7 +152,7 @@ class GameController{
 
         if(!started || this.scene.ball.stopped()){
             started = true;
-            this.scene.ball.speed = [100, 100, 0];
+            this.scene.ball.speed = [80, 100, 0];
         }
 
         setTimeScale(e.shiftKey);
@@ -162,7 +162,7 @@ class GameController{
         if(lost && e.keyCode =='R'.charCodeAt(0)){
             location.reload();
         }
-        
+
         keyState[e.keyCode || e.which] = false;
 
         if(lost){
@@ -244,5 +244,14 @@ var setTimeScale = function(shift){
         gameTimeScale = 10;
     } else{
         gameTimeScale = 1;
+    }
+}
+
+var showEndGameScreen = function(){
+    document.getElementById("end-screen").classList.remove("hidden");
+    if(lost){
+        document.getElementById("game-result").innerHTML = "Lost!";
+    } else{
+        document.getElementById("game-result").innerHTML = "Won!";
     }
 }
