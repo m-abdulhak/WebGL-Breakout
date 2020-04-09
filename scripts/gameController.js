@@ -1,5 +1,9 @@
 var keyState = {}; 
 var started = false;
+var lost = false;
+var score = 0;
+var lives = 2;
+
 var platformSpeed = [0,0,0];
 var minBallSpeed = 30;
 var maxBallSpeed = 400;
@@ -11,6 +15,13 @@ class GameController{
         
         window.addEventListener('keydown', this.keyDown, true);    
         window.addEventListener('keyup', this.keyUp, true);  
+    }
+
+    updateGame(time){
+        this.scene.ball.angularSpeed[2] = this.scene.ball.speed[0]/ballAngularSpeedRate;
+        this.checkControls(time);
+        this.checkCollisions();
+        this.checkReplaceLostBall();
     }
 
     checkCollisions(){
@@ -30,6 +41,7 @@ class GameController{
             const block = this.scene.blocks[index];
             
             if(block.collidesWithSphere(this.scene.ball)){
+                this.increaseScore();
                 indexesToDelete.push(block._Id);
                 this.scene.ball.bounceOffCube(block);
                 break;
@@ -69,15 +81,43 @@ class GameController{
 
         if(ball.position[1] < plat.position[1]){
             if(!ball.hasGravity){
-                ball.enableGravity();
-                ball.isTransparent = true;
                 this.endTurn();
             }
         }
     }
 
-    endTurn(){
-        console.log("lost");
+    checkReplaceLostBall(){
+        const scene = this.scene;
+        const ball = this.scene.ball;
+
+        if(ball.hasGravity && ball.stopped() && !lost){
+            scene.replaceBall();
+        }
+    }
+
+    endTurn(){      
+        const ball = this.scene.ball;
+
+        ball.enableGravity();
+        ball.isTransparent = true;
+
+        this.decreaseLives();
+    }
+
+    increaseScore(){
+        score = score + 1;
+    }
+
+    decreaseLives(){
+        lives = lives - 1;
+        if(lives<0){
+            this.endGame();
+        }
+    }
+
+    endGame(){
+        lost = true;
+        alert("Lost!");
     }
 
     movePlatformRight(movement){
@@ -99,6 +139,10 @@ class GameController{
     keyDown(e){
         keyState[e.keyCode || e.which] = true;
         
+        if(lost){
+            return;
+        }
+
         if (e.keyCode == 37){
             platformSpeed[0] = -this.scene.platformBaseSpeed[0]*200;
         }    
@@ -106,7 +150,7 @@ class GameController{
             platformSpeed[0] = this.scene.platformBaseSpeed[0]*200; 
         }
 
-        if(!started){
+        if(!started || this.scene.ball.stopped()){
             started = true;
             this.scene.ball.speed = [100, 100, 0];
         }
@@ -115,7 +159,15 @@ class GameController{
     }
 
     keyUp(e){
+        if(lost && e.keyCode =='R'.charCodeAt(0)){
+            location.reload();
+        }
+        
         keyState[e.keyCode || e.which] = false;
+
+        if(lost){
+            return;
+        }
 
         if (e.keyCode == 37 || e.keyCode == 39){
             platformSpeed = [0, 0, 0]; 
@@ -125,8 +177,11 @@ class GameController{
     }
     
     checkControls(time){
-        this.scene.ball.angularSpeed[2] = this.scene.ball.speed[0]/ballAngularSpeedRate;
-
+        
+        if(lost){
+            return;
+        }
+        
         var dir = [-cameraPosition[0]+target[0],
                         -cameraPosition[1]+target[1],
                         -cameraPosition[2]+target[2],

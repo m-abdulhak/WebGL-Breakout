@@ -150,7 +150,6 @@ class WebGlObject {
             if(Math.abs(this.acceleration[1]) > Math.abs(this.gravity[1])*500){
                 this.acceleration[1] = 0;
                 this.speed = [0, 0, 0];
-                this.scene.removeBall();
             }
         }
 
@@ -463,5 +462,9 @@ class WebGlObject {
     enableGravity(){
         this.hasGravity = true;
         this.acceleration = [...this.gravity];
+    }
+    
+    stopped(){
+        return  this.speed[0]==0 && this.speed[1]==0 && this.speed[2]==0;
     }
 }

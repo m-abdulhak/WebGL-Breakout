@@ -58,7 +58,7 @@ function main() {
 
     // Draw the scene.
     function render(time) {
-        if(!paused){
+        if(!paused && !lost){
 
         webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
@@ -81,10 +81,10 @@ function main() {
         viewMatrix = m4.inverse(cameraMatrix);
 
         // ------ Draw Objects --------
+            upadeteUiWithGameState();
             gameTime += (time-lastTime) / gameTimeScale;
             scene.render(gameTime);
-            game.checkControls(gameTime);
-            game.checkCollisions();
+            game.updateGame(gameTime);
         }
         lastTime = time;
         requestAnimationFrame(render);

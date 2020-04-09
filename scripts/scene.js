@@ -34,6 +34,9 @@ class Scene{
             "BottomLeft" : [1,1,0.8],
             "BottomRight" : [4,1,0.8]};
 
+        this.objectsMaterial = this.ShapeFactory.Materials.SuperReflective;
+        this.defBallLocation = [0,0,0];
+
         // Load Textures
         this.textureObjects = textureObjects;
         // TODO: Change lights texture
@@ -62,7 +65,7 @@ class Scene{
         
         this.createRoomLights();
 
-        this.createGameElements(sF.Materials.SuperReflective);
+        this.createGameElements(this.objectsMaterial);
         
         // position = this.getPosition(this.Positions.TopLeft);
         // parameters = sF.getDefaultsWith({"name": "Cube","angularSpeed":[.1,.1,0], "material": sF.Materials.Matt});
@@ -149,6 +152,8 @@ class Scene{
         const xStartPos = -(room.width-width)*room.posScale;
         const xEndtPos = (room.width-width)*room.posScale;
 
+        this.defBallLocation = [0, -(room.height*3/10)*room.posScale, zPos];
+
         for (let j = 0; j < 5; j++) {
             let xPos = xStartPos+width*room.posScale/2;
             let i = 0;
@@ -165,7 +170,7 @@ class Scene{
             }   
         }
 
-        this.createBall(0, -(room.height*3/10)*room.posScale, zPos, this.ballSize, material, this.ballTexture);
+        this.createBall(this.defBallLocation[0], this.defBallLocation[1], this.defBallLocation[2], this.ballSize, this.objectsMaterial, this.ballTexture);
 
         this.createPlatform(0, (room.height*7/10)*room.posScale, zPos, width*2, height/6, depth, material, this.platformTexture);
     }
@@ -364,7 +369,12 @@ class Scene{
 
     toggleAnimation(objIndex){
         this.objects[objIndex].toggleAnimation();
-    }			
+    }		
+
+    replaceBall(){
+        this.removeBall();
+        this.createBall(this.defBallLocation[0], this.defBallLocation[1], this.defBallLocation[2], this.ballSize, this.objectsMaterial, this.ballTexture);
+    }
 
     removeBall(){
         const indexSet = new Set([this.ball._Id]);

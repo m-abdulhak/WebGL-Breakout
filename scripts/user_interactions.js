@@ -199,3 +199,8 @@ var moveSpotLight = function (diffX, diffY) {
     scene.changeSpotLightDirection([newDir[0],newDir[1],newDir[2]]);
     scene.changeSpotLightPosition([cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0]);
 }
+
+var upadeteUiWithGameState = function(){
+    document.getElementById("life-label").innerHTML = lives;
+    document.getElementById("score-label").innerHTML = score;
+}
