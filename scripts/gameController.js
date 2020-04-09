@@ -98,6 +98,11 @@ class GameController{
         if (e.keyCode == 39){
             platformSpeed[0] = this.scene.platformBaseSpeed[0]*200; 
         }
+        
+        if(!started){
+            started = true;
+            this.scene.ball.speed = [100, 100, 0];
+        }
 
         setTimeScale(e.shiftKey);
     }
@@ -107,11 +112,6 @@ class GameController{
 
         if (e.keyCode == 37 || e.keyCode == 39){
             platformSpeed = [0, 0, 0]; 
-        }
-        
-        if(!started){
-            started = true;
-            this.scene.ball.speed = [100, 100, 0];
         }
 
         setTimeScale(e.shiftKey);

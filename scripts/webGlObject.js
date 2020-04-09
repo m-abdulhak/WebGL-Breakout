@@ -25,7 +25,8 @@ class WebGlObject {
                 scene,
                 textureObject = null,
                 hasTexture = true,
-                uniqueId) {
+                uniqueId,
+                hasGravity = false) {
         
         this._Id = uniqueId;
         this.gl = gl;
@@ -73,6 +74,13 @@ class WebGlObject {
         // Texture
         this.textureObject = textureObject;
         this.hasTexture = hasTexture;
+
+        // Physics 
+        this.hasGravity = hasGravity;
+        this.acceleration = [0, 0, 0];
+        this.gravity = [0, -10, 0];
+
+        this.acceleration = this.hasGravity? [...this.gravity] : this.acceleration; 
         
         // print buffer info
         //console.log(this.bufferInfo);
@@ -97,23 +105,31 @@ class WebGlObject {
         const delta = (time - this.time)/1000;
         this.time = time;
 
-        this.position = this.simulate(this.position,this.speed,delta);
-        this.bounce(this.position,this.speed, this.positionLimits.Max,this.positionLimits.Min);
+        this.simulatePosition(delta);
+        this.bouncePosition();
         this.translation = [this.position[0],this.position[1],this.position[2]];
 
-        this.rotation = this.simulate(this.rotation,this.angularSpeed,delta);
+        this.rotation = this.simulateTime(this.rotation,this.angularSpeed,delta);
         
         this.scale = this.simulateSize(this.scale,this.sizeChangeRate,delta);
         this.bounceScale(this.scaleLimit);
     }
 
-    simulate(vector,changeRate,timeDelta){
+    simulatePosition(timeDelta){
         if(this.enabled){
             if(this.isLight) {
                 this.scene.lights[this.lightIndex].position = this.position;
                 this.scene.lights[this.lightIndex].position[3] = 1;
-                //console.log('islight:',this.isLight,this.position,lightPosition)
             }
+            if(this.hasGravity){
+                this.speed = this.simulateTime(this.speed, this.acceleration, timeDelta);
+            }
+            this.position = this.simulateTime(this.position,this.speed,timeDelta);
+        }
+    }
+
+    simulateTime(vector,changeRate,timeDelta){
+        if(this.enabled){
             return vecAdd(vector,multByScalar(changeRate,timeDelta));
         }
         else{
@@ -125,7 +141,20 @@ class WebGlObject {
         return this.enabled? mult(vector,changeRate):vector;
     }
 
-    bounce(vector,changeRate,limitsHigh,limitsLow){
+    bouncePosition(){
+        // increase gravity when you hit ground 
+        if(this.position[1]<this.positionLimits.Min[1]){
+            this.acceleration[1] *= 2;
+            if(Math.abs(this.acceleration[1])> Math.abs(this.gravity[1])*2*10){
+                this.acceleration[1] = 0;
+                this.speed[1] = 0;
+            }
+        }
+
+        this.bounceVector(this.position,this.speed, this.positionLimits.Max,this.positionLimits.Min);
+    }
+
+    bounceVector(vector,changeRate,limitsHigh,limitsLow){
         for (var i = 0; i < vector.length; i++) {
             if(vector[i]>limitsHigh[i]){
                 changeRate[i] = -1* changeRate[i];

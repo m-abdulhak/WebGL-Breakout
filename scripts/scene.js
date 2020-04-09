@@ -144,7 +144,7 @@ class Scene{
         const height = room.height/20;
         const depth = room.depth/10;
 
-        const yStartPos = room.height*room.posScale/2-20;
+        const yStartPos = room.height*room.posScale/2-40;
         const zPos = (depth-room.zShift*2)*room.posScale;
         const xStartPos = -(room.width-width)*room.posScale;
         const xEndtPos = (room.width-width)*room.posScale;
