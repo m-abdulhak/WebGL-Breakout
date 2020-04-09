@@ -228,9 +228,9 @@ class Scene{
         var parameters = {...properties};
         parameters.size = [width, height, depth];
         
-        this.objects.push(sF.createShape(sF.Shapes.Cube, position, multByScalar(sF.Colors.Red,Math.random()/5+0.8), parameters, this, texture));
+        this.objects.push(sF.createShape(sF.Shapes.Cylinder, position, multByScalar(sF.Colors.Red,Math.random()/5+0.8), parameters, this, texture));
         this.platform = this.objects[this.objects.length-1];
-    }
+   }
 
     createRoomLights(){
         const room = this.room;
