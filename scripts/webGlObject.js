@@ -78,7 +78,7 @@ class WebGlObject {
         // Physics 
         this.hasGravity = hasGravity;
         this.acceleration = [0, 0, 0];
-        this.gravity = [0, -10, 0];
+        this.gravity = [0, -70, 0];
 
         this.acceleration = this.hasGravity? [...this.gravity] : this.acceleration; 
         
@@ -144,10 +144,11 @@ class WebGlObject {
     bouncePosition(){
         // increase gravity when you hit ground 
         if(this.position[1]<this.positionLimits.Min[1]){
-            this.acceleration[1] *= 2;
-            if(Math.abs(this.acceleration[1])> Math.abs(this.gravity[1])*2*10){
+            this.acceleration[1] *= 1.3;
+            if(Math.abs(this.acceleration[1]) > Math.abs(this.gravity[1])*500){
                 this.acceleration[1] = 0;
-                this.speed[1] = 0;
+                this.speed = [0, 0, 0];
+                this.scene.removeBall();
             }
         }
 
@@ -444,5 +445,10 @@ class WebGlObject {
         t.speed[0] *= bounceDir[0]; 
         t.speed[1] *= bounceDir[1]; 
         t.speed[2] *= bounceDir[2]; 
+    }
+
+    enableGravity(){
+        this.hasGravity = true;
+        this.acceleration = [...this.gravity];
     }
 }

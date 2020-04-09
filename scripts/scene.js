@@ -365,4 +365,9 @@ class Scene{
     toggleAnimation(objIndex){
         this.objects[objIndex].toggleAnimation();
     }			
+
+    removeBall(){
+        const indexSet = new Set([this.ball._Id]);
+        this.objects = this.objects.filter((object, i) => !indexSet.has(object._Id));
+    }
 }

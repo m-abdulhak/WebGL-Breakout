@@ -46,6 +46,10 @@ class GameController{
         const ball = this.scene.ball;
         const plat = this.scene.platform;
 
+        if(ball.hasGravity){
+            return;
+        }
+
         if(plat.collidesWithSphere(ball)){
             ball.speed[0] = (ball.speed[0]*3+platformSpeed[0])/4;
             ball.speed[1] = 100;
@@ -63,9 +67,11 @@ class GameController{
         const ball = this.scene.ball;
         const plat = this.scene.platform;
 
-        if(ball.position[1]-ball.scale[1]*10 < plat.position[1]+plat.scale[1]*10){
-            plat.speed[0]=0;
-            this.endTurn();
+        if(ball.position[1] < plat.position[1]){
+            if(!ball.hasGravity){
+                ball.enableGravity();
+                this.endTurn();
+            }
         }
     }
 
@@ -98,7 +104,7 @@ class GameController{
         if (e.keyCode == 39){
             platformSpeed[0] = this.scene.platformBaseSpeed[0]*200; 
         }
-        
+
         if(!started){
             started = true;
             this.scene.ball.speed = [100, 100, 0];
