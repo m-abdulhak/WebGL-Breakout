@@ -70,6 +70,7 @@ class GameController{
         if(ball.position[1] < plat.position[1]){
             if(!ball.hasGravity){
                 ball.enableGravity();
+                ball.isTransparent = true;
                 this.endTurn();
             }
         }

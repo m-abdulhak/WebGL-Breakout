@@ -23,7 +23,8 @@ class ShapeFactory {
         hasShadow:true,
         isLight: false,
         hasTexture: true,
-        hasGravity: false};
+        hasGravity: false,
+        isTransparent: false};
 
     this.Shapes = {
         "Plane" : primitives.createCubeVertices(20),
@@ -139,7 +140,8 @@ class ShapeFactory {
             textureURL,
             settings.hasTexture,
             this.getUniqueId(),
-            settings.hasGravity);
+            settings.hasGravity,
+            settings.isTransparent);
     }
 
     getUniqueId(){

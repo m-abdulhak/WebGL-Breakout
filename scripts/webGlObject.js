@@ -26,7 +26,8 @@ class WebGlObject {
                 textureObject = null,
                 hasTexture = true,
                 uniqueId,
-                hasGravity = false) {
+                hasGravity = false,
+                isTransparent = false) {
         
         this._Id = uniqueId;
         this.gl = gl;
@@ -60,6 +61,7 @@ class WebGlObject {
         this.materialDiffuse = materialDiffuse;
         this.materialSpecular = materialSpecular;
         this.materialShininess = materialShininess;
+        this.isTransparent = isTransparent;
 
         // Shadow
         this.hasShadow = hasShadow;
@@ -197,9 +199,20 @@ class WebGlObject {
         this.setupObjectBufferAndUniforms();
         this.loadTexture();
 
-        this.gl.depthMask(true);
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
-        this.gl.depthMask(false);
+        if(this.isTransparent){
+            
+            this.gl.depthMask(true);
+            this.gl.enable(this.gl.BLEND);
+            this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.DST_COLOR);
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+            this.gl.disable(this.gl.BLEND);
+            this.gl.depthMask(false);
+
+        } else {
+            this.gl.depthMask(true);
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.bufferInfo.numElements);
+            this.gl.depthMask(false);
+        }
 
         if(this.hasShadow && shadingMode<2){
             this.gl.enable(this.gl.BLEND);
