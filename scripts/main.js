@@ -141,18 +141,27 @@ var setViewPerspective = function (gl) {
     return m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
 }
 
+// red metal 
+// "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/1k/metals%20(1).png"
+
+// white black with stop sign 
+// "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/1k/metals%20(2).png"
+
+//
+// 
 
 var textureUrls = [
     // rock ball
     "https://raw.githubusercontent.com/m-abdulhak/Images/master/Ball1k.png",
     // white metal walls
     "https://raw.githubusercontent.com/m-abdulhak/Images/master/Walls1k.png",
-    // red tiles
-    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_03_basecolor.jpg",
+    // red tiles (blocks)
+    "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_09_basecolor.jpg",
     // green tiles
     "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_06_basecolor.jpg",
-    // black tiles
+    // black tiles (platform)
     "https://raw.githubusercontent.com/m-abdulhak/ImageHosting/master/4k/Tiles_09_basecolor.jpg"];
+
 var textureImages = [];
 var textureObjects = [];
 

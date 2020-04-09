@@ -20,7 +20,7 @@ class GameController{
 
     updateGame(time){
         this.checkWon();
-        this.scene.ball.angularSpeed[2] = this.scene.ball.speed[0]/ballAngularSpeedRate;
+        this.setAngularSpeeds();
         this.checkControls(time);
         this.checkCollisions();
         this.checkReplaceLostBall();
@@ -30,6 +30,11 @@ class GameController{
         if(this.scene.blocks.length<1){
             showEndGameScreen();
         }
+    }
+
+    setAngularSpeeds(){
+        this.scene.ball.angularSpeed[2] = this.scene.ball.speed[0]/ballAngularSpeedRate;
+        this.scene.platform.angularSpeed[1] = platformSpeed[0];
     }
 
     checkCollisions(){

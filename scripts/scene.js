@@ -43,7 +43,7 @@ class Scene{
         this.lightsTexture = this.textureObjects[1];
         this.wallsTexture = this.textureObjects[1];
         this.ballTexture = this.textureObjects[0];
-        this.blocksTexture = this.textureObjects[4];
+        this.blocksTexture = this.textureObjects[2];
         this.platformTexture = this.textureObjects[4];
 
 
@@ -172,7 +172,7 @@ class Scene{
 
         this.createBall(this.defBallLocation[0], this.defBallLocation[1], this.defBallLocation[2], this.ballSize, this.objectsMaterial, this.ballTexture);
 
-        this.createPlatform(0, (room.height*7/10)*room.posScale, zPos, width*2, height/6, depth, material, this.platformTexture);
+        this.createPlatform(0, (room.height*7/10)*room.posScale, zPos, width*2, height/6, width*2, material, this.platformTexture);
     }
 
     createBlock(xPos, yPos, zPos, width, height, depth, material, texture){
