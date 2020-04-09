@@ -1,6 +1,7 @@
 var keyState = {}; 
 var started = false;
 var lost = false;
+var won = false;
 var score = 0;
 var lives = 2;
 
@@ -18,10 +19,17 @@ class GameController{
     }
 
     updateGame(time){
+        this.checkWon();
         this.scene.ball.angularSpeed[2] = this.scene.ball.speed[0]/ballAngularSpeedRate;
         this.checkControls(time);
         this.checkCollisions();
         this.checkReplaceLostBall();
+    }
+
+    checkWon(){
+        if(this.scene.blocks.length<1){
+            showEndGameScreen();
+        }
     }
 
     checkCollisions(){
@@ -159,7 +167,7 @@ class GameController{
     }
 
     keyUp(e){
-        if(lost && e.keyCode =='R'.charCodeAt(0)){
+        if((lost || won) && e.keyCode =='R'.charCodeAt(0)){
             location.reload();
         }
 
@@ -249,11 +257,13 @@ var setTimeScale = function(shift){
 
 var showEndGameScreen = function(){
     score += lives*5;
+    lives = 0;
     document.getElementById("end-screen").classList.remove("hidden");
     if(lost){
         document.getElementById("game-result").innerHTML = "Lost!";
         document.getElementById("game-result").classList.add("red");
     } else{
+        won = true;
         document.getElementById("game-result").innerHTML = "Won!";
         document.getElementById("game-result").classList.add("key");
     }
