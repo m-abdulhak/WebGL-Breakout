@@ -99,6 +99,15 @@ canvas {
     color: white;
     -webkit-text-stroke: 1px gray;
 }
+#game-ui .ui-center{
+    width: 100%;
+    bottom: 0px;
+    text-align: center;
+    line-height: 0.5em;
+}
+#game-ui .ui-center .key{
+    width: 200px;
+}
 #game-ui .ui-left{
     left: 100px;
     transform: perspective(500px) rotateY(35deg);
