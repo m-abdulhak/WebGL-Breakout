@@ -161,10 +161,16 @@ class WebGlObject {
             if(vector[i]>limitsHigh[i]){
                 changeRate[i] = -1* changeRate[i];
                 vector[i] = limitsHigh[i];
+                if(this == this.scene.ball){
+                    playSound("hit1");
+                }
             }
             if(vector[i]<limitsLow[i]){
                 changeRate[i] = -1* changeRate[i];
                 vector[i] = limitsLow[i];
+                if(this == this.scene.ball){
+                    playSound("hit1");
+                }
             }
         }
     }

@@ -28,6 +28,7 @@ class GameController{
 
     checkWon(){
         if(this.scene.blocks.length<1 && !won){
+            playSound("won");
             showEndGameScreen();
         }
     }
@@ -57,6 +58,7 @@ class GameController{
                 this.increaseScore();
                 indexesToDelete.push(block._Id);
                 this.scene.ball.bounceOffCube(block);
+                playRandomHitSound();
                 break;
             }             
         }
@@ -85,6 +87,8 @@ class GameController{
             if(Math.abs(ball.speed[0])>maxBallSpeed){
                 ball.speed[0] = ball.speed[0] > 0 ? maxBallSpeed:-maxBallSpeed;
             }
+            
+            playSound("hit-platform");
         }
     }
 
@@ -129,8 +133,11 @@ class GameController{
     }
 
     endGame(){
-        lost = true;
-        showEndGameScreen();
+        if(!lost){
+            lost = true;
+            playSound("lost");
+            showEndGameScreen();
+        }
     }
 
     movePlatformRight(movement){
@@ -150,6 +157,8 @@ class GameController{
     }
 
     keyDown(e){
+        soundBackground.play();
+
         keyState[e.keyCode || e.which] = true;
         
         if(lost){
@@ -190,7 +199,6 @@ class GameController{
     }
     
     checkControls(time){
-        
         if(lost){
             return;
         }

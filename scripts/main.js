@@ -1,6 +1,5 @@
 "use strict";
 
-
 var gameTime = 0;
 var gameTimeScale = 1;
 var lastTime = 0;
@@ -53,6 +52,9 @@ function main() {
     selectedLightChanged();		
     lightIntensitySlidersChanged();
     selectedShapeChanged();
+
+    // load sounds
+    loadSounds();
 
     requestAnimationFrame(render);
 
@@ -220,8 +222,54 @@ var linkTextures = function(){
 // See: http://webglfundamentals.org/webgl/lessons/webgl-cors-permission.html
 function requestCORSIfNotSameOrigin(img, url) {
     if ((new URL(url)).origin !== window.location.origin) {
-      img.crossOrigin = "";
+        img.crossOrigin = "";
     }
-  }
+}
+
+var sound;
+var soundBackground;
+var end = 0;
+var clips = {
+    "hit1" : [0,.2],
+    "hit2" : [1.3,1.45],
+    "hit3" : [2.47,2.7],
+    "hit-platform" : [3.79,4],
+    "won": [5.65, 8],
+    "lost": [9.3, 12.6]
+
+};
+
+function loadSounds(){
+    sound = document.getElementById("sound-effects");
+    soundBackground = document.getElementById("sound-background");
+    soundBackground.loop = true;
+    soundBackground.volume = 0.3;
+
+    // Listener to stop the sound
+    sound.addEventListener('timeupdate', function() {
+          if (sound.currentTime > end) {
+            sound.pause();
+          }
+    },false);
+}
+
+function playSound(src) {
+    if (clips[src]) {
+        sound.currentTime = clips[src][0];
+        end = clips[src][1];
+        sound.play();
+    }
+}
+
+function playRandomHitSound(){  
+    var rand = Math.random();
+    if(rand >0.67){
+        playSound("hit1");
+    } else if (rand > 0.33){
+        playSound("hit2")
+    } else{
+        playSound("hit3");
+    }
+}
 
 window.onload = loadTextures();
