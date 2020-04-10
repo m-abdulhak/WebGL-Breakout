@@ -27,7 +27,7 @@ class GameController{
     }
 
     checkWon(){
-        if(this.scene.blocks.length<1){
+        if(this.scene.blocks.length<1 && !won){
             showEndGameScreen();
         }
     }
