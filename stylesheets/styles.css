@@ -117,6 +117,19 @@ canvas {
     text-align: center;
     line-height: 0.5em;
 }
+#game-ui .ui-top-left, #game-ui .ui-top-right{
+    width: 20%;
+    top: 0px;
+    font-size: 1.5em;
+}
+#game-ui .ui-top-left{
+    left: 87px;
+    text-align: left;
+}
+#game-ui .ui-top-right{
+    right: 87px;
+    text-align: right;
+}
 #game-ui .ui-center .key{
     width: 200px;
 }

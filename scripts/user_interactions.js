@@ -86,6 +86,9 @@ document.onkeydown = function(e) {
         cameraPosition = defCameraPosition;
         target = defTarget;
     }
+    else if(e.keyCode == 'L'.charCodeAt(0)){
+        soundBackground.muted = !soundBackground.muted;
+    }
 };
 
 document.onmousemove = function( event ) {

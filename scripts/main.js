@@ -60,7 +60,7 @@ function main() {
 
     // Draw the scene.
     function render(time) {
-        if(!paused && !lost){
+        if(!paused && !lost && !won ){
 
         webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
@@ -262,13 +262,15 @@ function playSound(src) {
 }
 
 function playRandomHitSound(){  
-    var rand = Math.random();
-    if(rand >0.67){
-        playSound("hit1");
-    } else if (rand > 0.33){
-        playSound("hit2")
-    } else{
-        playSound("hit3");
+    if(!won){
+        var rand = Math.random();
+        if(rand >0.67){
+            playSound("hit1");
+        } else if (rand > 0.33){
+            playSound("hit2")
+        } else{
+            playSound("hit3");
+        }
     }
 }
 
