@@ -60,6 +60,7 @@ function main() {
 
     // Draw the scene.
     function render(time) {
+        upadeteUiWithGameState();
         if(!paused && !lost && !won ){
 
         webglUtils.resizeCanvasToDisplaySize(gl.canvas);
@@ -83,7 +84,6 @@ function main() {
         viewMatrix = m4.inverse(cameraMatrix);
 
         // ------ Draw Objects --------
-            upadeteUiWithGameState();
             gameTime += (time-lastTime) / gameTimeScale;
             scene.render(gameTime);
             game.updateGame(gameTime);
@@ -230,7 +230,7 @@ var sound;
 var soundBackground;
 var end = 0;
 var clips = {
-    "hit1" : [0,.2],
+    "hit1" : [1.3,1.45],
     "hit2" : [1.3,1.45],
     "hit3" : [2.47,2.7],
     "hit-platform" : [3.79,4],
