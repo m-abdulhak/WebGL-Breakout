@@ -57,9 +57,9 @@ class WebGlObject {
         this.enabled = true;
 
         // material properties
-        this.materialAmbient = materialAmbient;
-        this.materialDiffuse = materialDiffuse;
         this.materialSpecular = materialSpecular;
+        this.materialDiffuse = materialDiffuse;
+        this.materialAmbient = materialAmbient;
         this.materialShininess = materialShininess;
         this.isTransparent = isTransparent;
 
@@ -87,6 +87,22 @@ class WebGlObject {
         // print buffer info
         //console.log(this.bufferInfo);
         //console.log(this);
+    }
+
+    changeProperties(specular, diffuse, ambient, shininess){
+        this.materialSpecular[0] = specular;
+        this.materialSpecular[1] = specular;
+        this.materialSpecular[2] = specular;
+            
+        this.materialDiffuse[0] = diffuse;
+        this.materialDiffuse[1] = diffuse;
+        this.materialDiffuse[2] = diffuse;
+
+        this.materialAmbient[0] = ambient;
+        this.materialAmbient[1] = ambient;
+        this.materialAmbient[2] = ambient;
+
+        this.materialShininess = shininess;
     }
 
     flattenedVertices() {
@@ -324,8 +340,8 @@ class WebGlObject {
         var flattenedLights = {};
 
         // TODO: load spotlight from scene
-        flattenedLights.spotlightInnerLimit =  lights[4].spotlightInnerLimit;
-        flattenedLights.spotlightOuterLimit =  lights[4].spotlightOuterLimit;
+        flattenedLights.spotlightInnerLimit =  this.scene.spotLights[0].spotlightInnerLimit;
+        flattenedLights.spotlightOuterLimit =  this.scene.spotLights[0].spotlightOuterLimit;
 
         var ambientProduct = [];
         var diffuseProduct = [];

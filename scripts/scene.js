@@ -49,7 +49,13 @@ class Scene{
         // Scene Elements
         this.lights = [];
         this.objects = [];
+
+        // Elements Groups
+        this.walls = [];
         this.blocks = [];
+        this.ball = {};
+        this.platform = {};
+        this.elements = [this.walls, this.blocks, [this.ball], [this.platform]];        
 
         // Lights
         this.mainLights = [];
@@ -114,6 +120,7 @@ class Scene{
         var parameters = {...properties};
         parameters.size = [width, height, .1];
         this.objects.push(sF.createShape(sF.Shapes.Plane, position, sF.Colors.Gray, parameters, this, this.wallsTexture));
+        this.walls.push(this.objects[this.objects.length-1]);
 
         // front side
         var position = [0, (-height+frontHeight)*posScale, depth*2*posScale+zShift];
@@ -121,30 +128,35 @@ class Scene{
         parameters.size = [];
         var parameters = sF.getDefaultsWith({"name": "Plane", "size":[width,frontHeight,.1], "material": sF.Materials.Mirror});
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
+        this.walls.push(this.objects[this.objects.length-1]);
 
         // left side
         position = [-width*posScale, 0, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [.1,height,depth];
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
+        this.walls.push(this.objects[this.objects.length-1]);
 
         // right side
         position = [width*posScale, 0, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [.1,height,depth];
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
+        this.walls.push(this.objects[this.objects.length-1]);
 
         // top side
         position = [0, height*posScale, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [width,.1,depth];
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
+        this.walls.push(this.objects[this.objects.length-1]);
 
         // top side
         position = [0, -height*posScale, depth*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [width,.1,depth];
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
+        this.walls.push(this.objects[this.objects.length-1]);
     }
 
     createGameElements(material){
@@ -217,6 +229,7 @@ class Scene{
 
         this.objects.push(sF.createShape(sF.Shapes.Sphere, position, sF.Colors.White, parameters, this, texture));
         this.ball = this.objects[this.objects.length-1];
+        this.elements[3] = [this.ball];
     }
     
     createPlatform(xPos, yPos, zPos, width, height, depth, material, texture){
@@ -238,6 +251,7 @@ class Scene{
         
         this.objects.push(sF.createShape(sF.Shapes.Cylinder, position, multByScalar(sF.Colors.Red,Math.random()/5+0.8), parameters, this, texture));
         this.platform = this.objects[this.objects.length-1];
+        this.elements[2] = [this.platform];
    }
 
     createRoomLights(){
@@ -362,19 +376,19 @@ class Scene{
     }
 
     decreaseSpotlightInnerLimit(){
-        this.spotLights[0].spotlightInnerLimit = Math.max(0.4,this.spotLights[0].spotlightInnerLimit-0.005);
+        this.spotLights[0].spotlightInnerLimit = Math.max(0.4, this.spotLights[0].spotlightInnerLimit - 0.005);
     }
 
     decreaseSpotlightOuterLimit(){
-        this.spotLights[0].spotlightOuterLimit = Math.max(0.2,this.spotLights[0].spotlightOuterLimit-0.005);
+        this.spotLights[0].spotlightOuterLimit = Math.max(0.2, this.spotLights[0].spotlightOuterLimit - 0.005);
     }
 
     increaseSpotlightInnerLimit(){
-        this.spotLights[0].spotlightInnerLimit = Math.min(0.999,this.spotLights[0].spotlightInnerLimit+0.005);
+        this.spotLights[0].spotlightInnerLimit = Math.min(0.999, this.spotLights[0].spotlightInnerLimit + 0.005);
     }
 
     increaseSpotlightOuterLimit(){
-        this.spotLights[0].spotlightOuterLimit = Math.min(0.95,this.spotLights[0].spotlightOuterLimit+0.005);
+        this.spotLights[0].spotlightOuterLimit = Math.min(0.95, this.spotLights[0].spotlightOuterLimit + 0.005);
     }
     
     render(time){
@@ -414,6 +428,12 @@ class Scene{
     changeLightsColor(lightTypeIndex, color){
         this.lightElements[lightTypeIndex].forEach(light => {
                 light.changeColorBase(color);
+        });
+    }
+
+    changeElementsProperties(index, specular, diffuse, ambient, shininess){
+        this.elements[index].forEach(object => {
+            object.changeProperties(specular, diffuse, ambient, shininess);
         });
     }
 }

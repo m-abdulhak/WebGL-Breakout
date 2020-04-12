@@ -95,7 +95,7 @@ document.onmousemove = function( event ) {
 };
 
 var updateLightProperties = function(){		
-    if(scene !== "undefined"){
+    if(scene !== undefined){
         var lightIndex = lightSelectionSlider.value;
 
         var newLightProperties = {  specular: document.getElementById("specular-intensity-slider").value, 
@@ -117,7 +117,7 @@ var selectedLightChanged = function() {
 }
 
 var updateLightPropertiesSliders = function(lightIndex){	
-    if(scene !== "undefined"){
+    if(scene !== undefined){
         document.getElementById("selected-light-label").textContent = document.getElementsByClassName("light-intensity-title")[lightIndex].textContent;
         document.getElementById("specular-intensity-slider").value = scene.lightElements[lightIndex][0].properties.specular;
         document.getElementById("diffuse-intensity-slider").value = scene.lightElements[lightIndex][0].properties.diffuse;
@@ -129,7 +129,7 @@ var updateLightPropertiesSliders = function(lightIndex){
 }
 
 var lightIntensitySlidersChanged = function() {	
-    if(scene !== "undefined"){
+    if(scene !== undefined){
         for (let index = 0; index < lightIntensitySliders.length; index++) {
             scene.changeLightsIntensity(index, lightIntensitySliders[index].value);				
         }
@@ -139,34 +139,21 @@ var lightIntensitySlidersChanged = function() {
         
 var updateMaterialProperties = function(){			
     var shapeIndex = shapeSelectionSlider.value;
-    scene.objects[shapeIndex].materialSpecular[0] = document.getElementById("specular-property-slider").value;
-    scene.objects[shapeIndex].materialSpecular[1] = document.getElementById("specular-property-slider").value;
-    scene.objects[shapeIndex].materialSpecular[2] = document.getElementById("specular-property-slider").value;
-
-    scene.objects[shapeIndex].materialAmbient[0] = document.getElementById("diffuse-property-slider").value;
-    scene.objects[shapeIndex].materialAmbient[1] = document.getElementById("diffuse-property-slider").value;
-    scene.objects[shapeIndex].materialAmbient[2] = document.getElementById("diffuse-property-slider").value;
-
-    scene.objects[shapeIndex].materialDiffuse[0] = document.getElementById("ambient-property-slider").value;
-    scene.objects[shapeIndex].materialDiffuse[1] = document.getElementById("ambient-property-slider").value;
-    scene.objects[shapeIndex].materialDiffuse[2] = document.getElementById("ambient-property-slider").value;
-
-    scene.objects[shapeIndex].materialShininess = document.getElementById("shineness-property-slider").value;
-
-    scene.objects[shapeIndex].color[0] = document.getElementById("red-property-slider").value;
-    scene.objects[shapeIndex].color[1] = document.getElementById("green-property-slider").value;
-    scene.objects[shapeIndex].color[2] = document.getElementById("blue-property-slider").value;
+    scene.changeElementsProperties(
+        shapeIndex,
+        document.getElementById("specular-property-slider").value,
+        document.getElementById("diffuse-property-slider").value,
+        document.getElementById("ambient-property-slider").value,
+        document.getElementById("shineness-property-slider").value
+    );
 }
 
 var updateMaterialPropertiesSliders = function(shapeIndex){
-    document.getElementById("selected-shape-label").textContent = scene.objects[shapeIndex].name;
-    document.getElementById("specular-property-slider").value = scene.objects[shapeIndex].materialSpecular[0];
-    document.getElementById("diffuse-property-slider").value = scene.objects[shapeIndex].materialAmbient[0];
-    document.getElementById("ambient-property-slider").value = scene.objects[shapeIndex].materialDiffuse[0];
-    document.getElementById("shineness-property-slider").value = scene.objects[shapeIndex].materialShininess;
-    document.getElementById("red-property-slider").value = scene.objects[shapeIndex].color[0];
-    document.getElementById("green-property-slider").value = scene.objects[shapeIndex].color[1];
-    document.getElementById("blue-property-slider").value = scene.objects[shapeIndex].color[2];
+    document.getElementById("selected-shape-label").textContent = scene.elements[shapeIndex][0].name;
+    document.getElementById("specular-property-slider").value = scene.elements[shapeIndex][0].materialSpecular[0];
+    document.getElementById("diffuse-property-slider").value = scene.elements[shapeIndex][0].materialAmbient[0];
+    document.getElementById("ambient-property-slider").value = scene.elements[shapeIndex][0].materialDiffuse[0];
+    document.getElementById("shineness-property-slider").value = scene.elements[shapeIndex][0].materialShininess;
 }
 
 var selectedShapeChanged = function() {
@@ -185,27 +172,30 @@ for (let index = 0; index < lightIntensitySliders.length; index++) {
 }
 
 shapeSelectionSlider.oninput = selectedShapeChanged;
+
 for (let index = 0; index < matrialPropertiesSliders.length; index++) {
     matrialPropertiesSliders[index].oninput = updateMaterialProperties;
 }
 
 var moveSpotLight = function (diffX, diffY) {
-    var dir = [-cameraPosition[0]+target[0],
-                    -cameraPosition[1]+target[1],
-                    -cameraPosition[2]+target[2],
-                    0];
+    if(scene !== undefined){
+        var dir = [-cameraPosition[0]+target[0],
+                        -cameraPosition[1]+target[1],
+                        -cameraPosition[2]+target[2],
+                        0];
 
-    var normDir = normalize(dir);
+        var normDir = normalize(dir);
 
-    var diff = [diffX,diffY];
-    var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
+        var diff = [diffX,diffY];
+        var dirInCamerCoor = normalize(vecMatProduct(normDir,cameraMatrix));
 
-    var newDirInCamerCoor = rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],diff[1]);
-    var newDirInCamerCoor = rotateY([newDirInCamerCoor[0],newDirInCamerCoor[1],newDirInCamerCoor[2]],diff[0]);
-    var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
+        var newDirInCamerCoor = rotateX([dirInCamerCoor[0],dirInCamerCoor[1],dirInCamerCoor[2]],diff[1]);
+        var newDirInCamerCoor = rotateY([newDirInCamerCoor[0],newDirInCamerCoor[1],newDirInCamerCoor[2]],diff[0]);
+        var newDir = normalize(vecMatProduct(newDirInCamerCoor,m4.inverse(cameraMatrix)));
 
-    scene.changeSpotLightDirection([newDir[0],newDir[1],newDir[2]]);
-    scene.changeSpotLightPosition([cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0]);
+        scene.changeSpotLightDirection([newDir[0],newDir[1],newDir[2]]);
+        scene.changeSpotLightPosition([cameraPosition[0], cameraPosition[1], cameraPosition[2], 0.0]);
+    }
 }
 
 var upadeteUiWithGameState = function(){
