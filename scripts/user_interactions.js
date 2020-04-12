@@ -1,4 +1,3 @@
-
 // Light options elements
 var lightIntensitySliders = document.getElementsByClassName("lightIntensitySlider");
 var lightSelectionSlider = document.getElementById("light-selection-slider");
@@ -27,24 +26,24 @@ document.onkeydown = function(e) {
         document.getElementById("sidebar").style.display = dis != "none" ? "none":"block";
     }
     else if (e.which == 'M'.charCodeAt(0)){
-        scene.lights[2].position[0] += 10;
+        scene.mainLights[0].position[0] += 10;
     }
     else if (e.which == 'B'.charCodeAt(0)){
-        scene.lights[2].position[0] -= 10;
+        scene.mainLights[0].position[0] -= 10;
     }
     else if (e.which == 'H'.charCodeAt(0)){
-        scene.lights[2].position[1] += 10;
+        scene.mainLights[0].position[1] += 10;
     }
     else if (e.which == 'N'.charCodeAt(0)){
-        scene.lights[2].position[1] -= 10;
+        scene.mainLights[0].position[1] -= 10;
     }
     else if (e.which == 'J'.charCodeAt(0)){
-        scene.lights[2].position[2] += 10;
-        scene.lights[2].position[2] = Math.max(scene.lights[2].position[2],0);
+        scene.mainLights[0].position[2] += 10;
+        scene.mainLights[0].position[2] = Math.max(scene.mainLights[0].position[2],0);
     }
     else if (e.which == 'G'.charCodeAt(0)){
-        scene.lights[2].position[2] -= 10;
-        scene.lights[2].position[2] = Math.max(scene.lights[2].position[2],0);
+        scene.mainLights[0].position[2] -= 10;
+        scene.mainLights[0].position[2] = Math.max(scene.mainLights[0].position[2],0);
     }
     else if (e.which == 'F'.charCodeAt(0)){
         shadingMode = (shadingMode+1)%3;
@@ -95,29 +94,21 @@ document.onmousemove = function( event ) {
     moveSpotLight((event.pageX/gl.canvas.clientWidth - 0.5)*3.14/4, (event.pageY/gl.canvas.clientHeight-0.5)*3.14/4);
 };
 
-var updateLightProperties = function(){			
-    var lightIndex = lightSelectionSlider.value;
+var updateLightProperties = function(){		
+    if(scene !== "undefined"){
+        var lightIndex = lightSelectionSlider.value;
 
-    var newLightProperties = {  specular: document.getElementById("specular-intensity-slider").value, 
-                                diffuse: document.getElementById("diffuse-intensity-slider").value, 
-                                ambient: document.getElementById("ambient-intensity-slider").value};
-    
-    var newLightColor = [   document.getElementById("red-intensity-slider").value, 
-                            document.getElementById("green-intensity-slider").value, 
-                            document.getElementById("blue-intensity-slider").value];
-    
-    scene.lights[lightIndex].changeProperties(newLightProperties);
-    scene.lights[lightIndex].changeColor(newLightColor);
-}
-
-var updateLightPropertiesSliders = function(lightIndex){
-    document.getElementById("selected-light-label").textContent = document.getElementsByClassName("light-intensity-title")[lightIndex].textContent;
-    document.getElementById("specular-intensity-slider").value = scene.lights[lightIndex].properties.specular;
-    document.getElementById("diffuse-intensity-slider").value = scene.lights[lightIndex].properties.diffuse;
-    document.getElementById("ambient-intensity-slider").value = scene.lights[lightIndex].properties.ambient;
-    document.getElementById("red-intensity-slider").value = scene.lights[lightIndex].color[0];
-    document.getElementById("green-intensity-slider").value = scene.lights[lightIndex].color[1];
-    document.getElementById("blue-intensity-slider").value = scene.lights[lightIndex].color[2];
+        var newLightProperties = {  specular: document.getElementById("specular-intensity-slider").value, 
+                                    diffuse: document.getElementById("diffuse-intensity-slider").value, 
+                                    ambient: document.getElementById("ambient-intensity-slider").value};
+        
+        var newLightColor = [   document.getElementById("red-intensity-slider").value, 
+                                document.getElementById("green-intensity-slider").value, 
+                                document.getElementById("blue-intensity-slider").value];
+        
+        scene.changeLightsProperties(lightIndex, newLightProperties);
+        scene.changeLightsColor(lightIndex, newLightColor);
+    }	
 }
 
 var selectedLightChanged = function() {
@@ -125,11 +116,25 @@ var selectedLightChanged = function() {
     updateLightPropertiesSliders(selectedLight);
 }
 
-var lightIntensitySlidersChanged = function() {
-    for (let index = 0; index < lightIntensitySliders.length; index++) {
-        scene.lights[index].changeColorIntensity(lightIntensitySliders[index].value);				
-    }
-    selectedLightChanged();
+var updateLightPropertiesSliders = function(lightIndex){	
+    if(scene !== "undefined"){
+        document.getElementById("selected-light-label").textContent = document.getElementsByClassName("light-intensity-title")[lightIndex].textContent;
+        document.getElementById("specular-intensity-slider").value = scene.lightElements[lightIndex][0].properties.specular;
+        document.getElementById("diffuse-intensity-slider").value = scene.lightElements[lightIndex][0].properties.diffuse;
+        document.getElementById("ambient-intensity-slider").value = scene.lightElements[lightIndex][0].properties.ambient;
+        document.getElementById("red-intensity-slider").value = scene.lightElements[lightIndex][0].color[0];
+        document.getElementById("green-intensity-slider").value = scene.lightElements[lightIndex][0].color[1];
+        document.getElementById("blue-intensity-slider").value = scene.lightElements[lightIndex][0].color[2];
+    }	
+}
+
+var lightIntensitySlidersChanged = function() {	
+    if(scene !== "undefined"){
+        for (let index = 0; index < lightIntensitySliders.length; index++) {
+            scene.changeLightsIntensity(index, lightIntensitySliders[index].value);				
+        }
+        selectedLightChanged();
+    }	
 }
         
 var updateMaterialProperties = function(){			

@@ -46,10 +46,18 @@ class Scene{
         this.blocksTexture = this.textureObjects[2];
         this.platformTexture = this.textureObjects[4];
 
-
+        // Scene Elements
         this.lights = [];
         this.objects = [];
         this.blocks = [];
+
+        // Lights
+        this.mainLights = [];
+        this.secondaryLights = [];
+        this.movingLights = [];
+        this.spotLights = [];
+        this.lightElements = [this.mainLights, this.secondaryLights, this.movingLights, this.spotLights];
+
         this.createObjects();
     }
 
@@ -246,23 +254,33 @@ class Scene{
         const lightZMid = frontLightPosZ/2;
 
         const highProperties = {specular: .3, diffuse: .8, ambient: 0.005};
-        const dimProperties = {specular: 0.3, diffuse: .1, ambient: 0.005};
+        const dimProperties = {specular:  .3, diffuse: .1, ambient: 0.005};
 
         this.createLight([0, 0, frontLightPosZ/2, 1.0], this.LightColors.White, highProperties);
+        this.mainLights.push(this.lights[this.lights.length-1]);
+
         this.createLight([lightXPos, lightYPos, lightZPos, 1.0], this.LightColors.White, highProperties);
+        this.secondaryLights.push(this.lights[this.lights.length-1]);
         this.createLight([lightXPos, lightYPos, lightZNeg, 1.0], this.LightColors.White, highProperties);
+        this.secondaryLights.push(this.lights[this.lights.length-1]);
         this.createLight([lightXPos, lightYNeg, lightZPos, 1.0], this.LightColors.White, highProperties);
+        this.secondaryLights.push(this.lights[this.lights.length-1]);
         this.createLight([lightXPos, lightYNeg, lightZNeg, 1.0], this.LightColors.White, highProperties);
+        this.secondaryLights.push(this.lights[this.lights.length-1]);
         
         // moving lights
         this.createMovingLightObject([-1, -1, -1],[0, 0, 1], dimProperties);
+        this.movingLights.push(this.lights[this.lights.length-1]);
         this.createMovingLightObject([-1, 1, -1],[0, 0, 1], dimProperties);
+        this.movingLights.push(this.lights[this.lights.length-1]);
         this.createMovingLightObject([1, 1, -1],[0, 0, 1], dimProperties);
+        this.movingLights.push(this.lights[this.lights.length-1]);
         this.createMovingLightObject([1, -1, -1],[0, 0, 1], dimProperties);
+        this.movingLights.push(this.lights[this.lights.length-1]);
 
         // Spotlight
         this.createLight([70, 70, 220, 0.0], [1.0, 1.0, 1.0],{specular:.0, diffuse:0.0, ambient:0.0}, [0., 0., -1.0]);
-        this.spotLight = this.lights[this.lights.length-1];
+        this.spotLights.push(this.lights[this.lights.length-1]);
     }
 
     createMovingLightObject(sides, speeds, properties = {specular: 0.3, diffuse: .1, ambient: 0.005}){
@@ -336,27 +354,27 @@ class Scene{
     }
 
     changeSpotLightDirection(direction){
-        this.spotLight.direction = direction;
+        this.spotLights[0].direction = direction;
     }
 
     changeSpotLightPosition(position){
-        this.spotLight.position = position;
+        this.spotLights[0].position = position;
     }
 
     decreaseSpotlightInnerLimit(){
-        this.spotLight.spotlightInnerLimit = Math.max(0.4,this.spotLight.spotlightInnerLimit-0.005);
+        this.spotLights[0].spotlightInnerLimit = Math.max(0.4,this.spotLights[0].spotlightInnerLimit-0.005);
     }
 
     decreaseSpotlightOuterLimit(){
-        this.spotLight.spotlightOuterLimit = Math.max(0.2,this.spotLight.spotlightOuterLimit-0.005);
+        this.spotLights[0].spotlightOuterLimit = Math.max(0.2,this.spotLights[0].spotlightOuterLimit-0.005);
     }
 
     increaseSpotlightInnerLimit(){
-        this.spotLight.spotlightInnerLimit = Math.min(0.999,this.spotLight.spotlightInnerLimit+0.005);
+        this.spotLights[0].spotlightInnerLimit = Math.min(0.999,this.spotLights[0].spotlightInnerLimit+0.005);
     }
 
     increaseSpotlightOuterLimit(){
-        this.spotLight.spotlightOuterLimit = Math.min(0.95,this.spotLight.spotlightOuterLimit+0.005);
+        this.spotLights[0].spotlightOuterLimit = Math.min(0.95,this.spotLights[0].spotlightOuterLimit+0.005);
     }
     
     render(time){
@@ -379,5 +397,23 @@ class Scene{
     removeBall(){
         const indexSet = new Set([this.ball._Id]);
         this.objects = this.objects.filter((object, i) => !indexSet.has(object._Id));
+    }
+
+    changeLightsIntensity(lightTypeIndex, intensity){
+        this.lightElements[lightTypeIndex].forEach(light => {
+            light.changeColorIntensity(intensity);
+        });
+    }
+
+    changeLightsProperties(lightTypeIndex, properties){
+        this.lightElements[lightTypeIndex].forEach(light => {
+                light.changeProperties(properties);
+        });
+    }
+
+    changeLightsColor(lightTypeIndex, color){
+        this.lightElements[lightTypeIndex].forEach(light => {
+                light.changeColorBase(color);
+        });
     }
 }

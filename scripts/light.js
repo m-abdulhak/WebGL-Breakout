@@ -11,6 +11,11 @@ class Light{
         this.spotlightInnerLimit = spotlightInnerLimit;
     }
 
+    changeColorBase(newColor){
+        this.colorBase = [...newColor];
+        this.changeColor(this.colorBase);
+    }
+
     changeColorIntensity(intensity){
         this.changeColor(multByScalar(this.colorBase, intensity));
     }
