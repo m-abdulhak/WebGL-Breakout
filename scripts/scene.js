@@ -113,7 +113,7 @@ class Scene{
         const zShift = this.room.zShift;    
         const posScale = this.room.posScale;
 
-        let properties = sF.getDefaultsWith({"name": "Plane", "material": material, "hasShadow": false});
+        let properties = sF.getDefaultsWith({"name": "Wall", "material": material, "hasShadow": false});
 
         // back side
         var position = [0, 0, zShift];
@@ -126,7 +126,7 @@ class Scene{
         var position = [0, (-height+frontHeight)*posScale, depth*2*posScale+zShift];
         var parameters = {...properties};
         parameters.size = [];
-        var parameters = sF.getDefaultsWith({"name": "Plane", "size":[width,frontHeight,.1], "material": sF.Materials.Mirror});
+        var parameters = sF.getDefaultsWith({"name": "Wall", "size":[width,frontHeight,.1], "material": sF.Materials.Mirror});
         this.objects.push(sF.createShape(sF.Shapes.Plane,position,sF.Colors.Gray,parameters,this, this.wallsTexture));
         this.walls.push(this.objects[this.objects.length-1]);
 
@@ -198,7 +198,7 @@ class Scene{
     createBlock(xPos, yPos, zPos, width, height, depth, material, texture){
         var sF = this.ShapeFactory;
 
-        let properties = sF.getDefaultsWith({   "name": "block", 
+        let properties = sF.getDefaultsWith({   "name": "Block", 
                                                 "material": material, 
                                                 "hasShadow": false, 
                                                 "hasTexture": true});
