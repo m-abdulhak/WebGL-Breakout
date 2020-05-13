@@ -1,6 +1,7 @@
 # WebGL Breakout Game Demo
 
-- Soure code can be found @ https://github.com/m-abdulhak/WebGLBreakoutGame 
-- Try it @ https://m-abdulhak.github.io/WebGLBreakoutGame/
+- WebGL 3D implementation of the classic game Breakout.
+- Soure code: https://github.com/m-abdulhak/WebGLBreakoutGame 
+- Demo: https://m-abdulhak.github.io/WebGLBreakoutGame/
 
-- Developed by Mohammed Abdullhak
+- Developed by Mohammed Abdullhak (m_abdulhak@outlook.com)
